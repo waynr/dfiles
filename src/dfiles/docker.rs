@@ -1,21 +1,22 @@
-use shiplift::{BuildOptions, Docker};
-use tokio::prelude::{Future, Stream};
+use shiplift::BuildOptions;
+use shiplift::Docker;
+use shiplift::ContainerOptions;
+use tokio::prelude::Future;
+use tokio::prelude::Stream;
 use serde::Deserialize;
 use serde_json::from_value;
-use std::path::PathBuf;
 
 #[derive(Deserialize, Debug)]
 struct BuildOutput {
     stream: String,
 }
 
-pub fn build(path: PathBuf) {
+pub fn build(opts: &BuildOptions) {
     let docker = Docker::new();
-    let path_str = path.to_str().unwrap();
 
     let fut = docker
         .images()
-        .build(&BuildOptions::builder(path_str).tag("shiplift_test").build())
+        .build(opts)
         .for_each(|output| {
             let u: Result<BuildOutput, _> = from_value(output);
             match u {
@@ -26,5 +27,16 @@ pub fn build(path: PathBuf) {
         })
         .map_err(|e| eprintln!("Error: {}", e));
 
+    tokio::run(fut);
+}
+
+pub fn run(opts: &ContainerOptions) {
+    let docker = Docker::new();
+
+    let fut = docker
+        .containers()
+        .create(opts)
+        .map(|info| println!("{:?}", info))
+        .map_err(|e| eprintln!("{:?}", e));
     tokio::run(fut);
 }

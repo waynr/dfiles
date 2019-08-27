@@ -4,6 +4,8 @@ use clap::App;
 use clap::Arg;
 use clap::SubCommand;
 
+use crate::dfiles::containermanager::ContainerManager;
+
 fn main() {
     let dirname = Arg::with_name("dirname")
         .short("d")
@@ -22,12 +24,14 @@ fn main() {
     let root_dir = std::path::Path::new(matches.value_of("dirname").unwrap());
     let chrome_dir = root_dir.join("chrome");
 
+    let mgr = dfiles::apps::chrome::new(chrome_dir);
+
     match matches.subcommand() {
-        ("run", _) => (),
-        ("build", _) => dfiles::build::build(chrome_dir),
-        (_, _) => { 
-            eprintln!("unsupported subcommand");
-            std::process::exit(1);
-        },
+        ("run", _) => mgr.run().unwrap(),
+        ("build", _) => mgr.build().unwrap(),
+        (_, _) => {
+            mgr.build().unwrap();
+            mgr.run().unwrap();
+        }
     }
 }
