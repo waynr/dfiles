@@ -4,7 +4,10 @@ use clap::App;
 use clap::Arg;
 use clap::SubCommand;
 
-use crate::dfiles::containermanager::ContainerManager;
+use crate::dfiles::containermanager::{
+    Buildable,
+    Runnable,
+};
 
 fn main() {
     let dirname = Arg::with_name("dirname")

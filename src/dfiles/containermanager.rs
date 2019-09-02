@@ -1,13 +1,16 @@
-pub trait ContainerManager {
-    fn dependencies(&self) -> &Vec<Box<dyn ContainerManager>>;
+pub trait Buildable {
+    fn dependencies(&self) -> &Vec<Box<dyn Buildable>>;
     fn build(&self) -> Result<(), ()>;
-    fn run(&self) -> Result<(), ()>;
-    fn image(&self) -> String;
-}
 
-pub fn build_deps<T: ContainerManager>(cm: &T) {
-    let dependencies = cm.dependencies();
-    for dep in dependencies {
-        dep.build().unwrap();
+    fn build_deps(&self) {
+        let dependencies = self.dependencies();
+        for dep in dependencies {
+            dep.build().unwrap();
+        }
     }
 }
+
+pub trait Runnable : Buildable {
+    fn run(&self) -> Result<(), ()>;
+}
+

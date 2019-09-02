@@ -1,6 +1,7 @@
+use std::process::Command;
+
 use shiplift::BuildOptions;
 use shiplift::Docker;
-use shiplift::ContainerOptions;
 use tokio::prelude::Future;
 use tokio::prelude::Stream;
 use serde::Deserialize;
@@ -30,13 +31,18 @@ pub fn build(opts: &BuildOptions) {
     tokio::run(fut);
 }
 
-pub fn run(opts: &ContainerOptions) {
-    let docker = Docker::new();
+pub fn run(args: Vec<String>) 
+{
+    let cmdstr: String = args.join(" ");
+    println!("docker {}", cmdstr);
 
-    let fut = docker
-        .containers()
-        .create(opts)
-        .map(|info| println!("{:?}", info))
-        .map_err(|e| eprintln!("{:?}", e));
-    tokio::run(fut);
+    let mut child = Command::new("docker")
+        .arg("run")
+        .args(args)
+        .spawn()
+        .expect("meow")
+        ;
+
+    let _ = child.wait()
+        .expect("failed waiting for child process");
 }
