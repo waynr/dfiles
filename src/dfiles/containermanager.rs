@@ -13,4 +13,3 @@ pub trait Buildable {
 pub trait Runnable : Buildable {
     fn run(&self) -> Result<(), ()>;
 }
-

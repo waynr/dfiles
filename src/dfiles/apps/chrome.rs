@@ -53,19 +53,6 @@ impl Runnable for Chrome {
         let display = env::var("DISPLAY")
             .expect("DISPLAY must be set");
 
-        // let uid = String::from_utf8(Command::new("id")
-        //     .arg("-u")
-        //     .output()
-        //     .expect("user id")
-        //     .stdout
-        //     .split_last() // remove newline
-        //     .unwrap()
-        //     .1
-        //     .to_vec()
-        //     )
-        //     .expect("string decoded from utf8")
-        //     ;
-        //
         let mut pulsedir = String::new();
 
         for entry in fs::read_dir(xdg_runtime_dir.clone()).unwrap() {
