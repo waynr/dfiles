@@ -1,3 +1,18 @@
+use std::path::{
+    PathBuf,
+};
+
+use dfiles::containermanager::{
+    NewContainerManager,
+    ContainerAspects
+};
+
 fn main() {
-    println!("Hello, world!");
+    let cm = NewContainerManager(
+        PathBuf::new(),
+        String::from("waynr/chrome"),
+        String::from("dev"),
+        Vec::new(),
+        Vec::new(),
+    );
 }

@@ -81,6 +81,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "chrome"
 version = "0.1.0"
+dependencies = [
+ "dfiles 0.1.0",
+]
 
 [[package]]
 name = "clap"
