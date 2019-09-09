@@ -63,10 +63,7 @@ impl ContainerAspect for X11 {
 pub struct Video {}
 impl ContainerAspect for Video {
     fn run_args(&self) -> Vec<String> {
-        let display = env::var("DISPLAY")
-            .expect("DISPLAY must be set");
-
-        let mut video_devices: Vec<String> = fs::read_dir(Path::new("/dev"))
+        let video_devices: Vec<String> = fs::read_dir(Path::new("/dev"))
             .expect("get entries for dir")
             .filter_map(Result::ok)
             .filter(|entry| match entry

@@ -1,16 +1,7 @@
-use std::path::{
-    PathBuf,
-    Path,
-};
-use std::{
-    env,
-    fs,
-};
-
+use std::path::PathBuf;
 
 use clap::{
     App,
-    Arg,
     SubCommand,
 };
 use shiplift::BuildOptions;
@@ -22,8 +13,8 @@ pub struct ContainerManager {
     image_name: String,
     image_tag: String,
     dependencies: Vec<Box<ContainerManager>>,
-    aspects: Vec<Box<aspects::ContainerAspect>>,
-    args: Vec<Box<String>>,
+    aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+    args: Vec<String>,
 }
 
 pub fn new_container_manager(
@@ -31,8 +22,8 @@ pub fn new_container_manager(
     image_name: String,
     image_tag: String,
     dependencies: Vec<Box<ContainerManager>>,
-    aspects: Vec<Box<aspects::ContainerAspect>>,
-    args: Vec<Box<String>>,
+    aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+    args: Vec<String>,
 ) -> ContainerManager {
     ContainerManager{
         path: path,
@@ -63,6 +54,7 @@ impl ContainerManager {
         }
 
         args.push(self.image().to_string());
+        args.extend_from_slice(&self.args);
         docker::run(args);
         Ok(())
     }

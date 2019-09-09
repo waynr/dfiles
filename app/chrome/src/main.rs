@@ -3,7 +3,6 @@ use std::path::{
 };
 use std::{
     env,
-    fs,
 };
 
 use dfiles::aspects;
@@ -18,7 +17,6 @@ impl aspects::ContainerAspect for Chrome {
             .expect("HOME must be set");
 
         vec![
-            "--cap-add", "SYS_ADMIN",
             "--cpu-shares", "512",
             "--memory", "3072mb",
             "-v", "/dev/shm:/dev/shm",
@@ -55,7 +53,6 @@ fn main() {
             "--user-data-dir=/data",
         ].into_iter()
             .map(String::from)
-            .map(Box::new)
             .collect(),
     );
 
