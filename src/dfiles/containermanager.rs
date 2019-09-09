@@ -47,19 +47,9 @@ impl ContainerManager {
     }
 
     fn run(&self) -> Result<(), ()> {
-        let home = env::var("HOME")
-            .expect("HOME must be set");
-
         let mut args: Vec<String> = vec![
-            "-i", "-t", "--rm",
+            "--rm",
 
-            "--cpu-shares", "512",
-            "--memory", "3072mb",
-            "-v", "/dev/shm:/dev/shm",
-
-            "-v", format!("{}/.config/google-chrome:/data", home).as_str(),
-            "-v", format!("{}/downloads:/home/wayne/Downloads", home).as_str(),
-            "--name", "chrome",
         ].into_iter()
             .map(String::from)
             .collect();
