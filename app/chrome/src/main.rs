@@ -50,7 +50,14 @@ fn main() {
             Box::new(aspects::NetHost{}),
             Box::new(aspects::SysAdmin{}),
         ],
+        vec![
+            "google-chrome",
+            "--user-data-dir=/data",
+        ].into_iter()
+            .map(String::from)
+            .map(Box::new)
+            .collect(),
     );
 
-    mgr.execute(String::from("chrome"));
+    mgr.execute("chrome");
 }

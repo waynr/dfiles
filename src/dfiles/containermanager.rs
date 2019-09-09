@@ -23,6 +23,7 @@ pub struct ContainerManager {
     image_tag: String,
     dependencies: Vec<Box<ContainerManager>>,
     aspects: Vec<Box<aspects::ContainerAspect>>,
+    args: Vec<Box<String>>,
 }
 
 pub fn new_container_manager(
@@ -31,13 +32,15 @@ pub fn new_container_manager(
     image_tag: String,
     dependencies: Vec<Box<ContainerManager>>,
     aspects: Vec<Box<aspects::ContainerAspect>>,
+    args: Vec<Box<String>>,
 ) -> ContainerManager {
     ContainerManager{
         path: path,
         image_name: image_name,
         image_tag: image_tag,
-        aspects: aspects,
         dependencies: dependencies,
+        aspects: aspects,
+        args: args,
     }
 }
 
@@ -46,9 +49,10 @@ impl ContainerManager {
         String::from(format!("{}:{}", self.image_name, &self.image_tag))
     }
 
-    fn run(&self) -> Result<(), ()> {
+    fn run(&self, name: &str) -> Result<(), ()> {
         let mut args: Vec<String> = vec![
             "--rm",
+            "--name", name
 
         ].into_iter()
             .map(String::from)
@@ -59,8 +63,6 @@ impl ContainerManager {
         }
 
         args.push(self.image().to_string());
-        args.push(String::from("google-chrome"));
-        args.push(String::from("--user-data-dir=/data"));
         docker::run(args);
         Ok(())
     }
@@ -80,7 +82,7 @@ impl ContainerManager {
         Ok(())
     }
 
-    pub fn execute(&self, name: String) {
+    pub fn execute(&self, name: &str) {
         let matches = App::new(name)
             .version("0.0")
             .subcommand(SubCommand::with_name("run"))
@@ -88,11 +90,11 @@ impl ContainerManager {
             .get_matches();
 
         match matches.subcommand() {
-            ("run", _) => self.run().unwrap(),
+            ("run", _) => self.run(&name).unwrap(),
             ("build", _) => self.build().unwrap(),
             (_, _) => {
                 self.build().unwrap();
-                self.run().unwrap();
+                self.run(&name).unwrap();
             }
         }
     }
