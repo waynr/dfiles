@@ -184,6 +184,9 @@ dependencies = [
 [[package]]
 name = "firefox"
 version = "0.1.0"
+dependencies = [
+ "dfiles 0.1.0",
+]
 
 [[package]]
 name = "flate2"
