@@ -22,7 +22,7 @@ impl aspects::ContainerAspect for Firefox {
             "--memory", "3072mb",
             "-v", "/dev/shm:/dev/shm",
 
-            "-v", format!("{}/.mozilla/firefox/{}:/data", home, profile).as_str(),
+            "-v", format!("{h}/.mozilla/firefox/{p}:{h}/.mozilla/firefox/profile", h=home, p=profile).as_str(),
             "-v", format!("{}/downloads:/home/wayne/Downloads", home).as_str(),
 
             "--name", "firefox",
@@ -33,6 +33,8 @@ impl aspects::ContainerAspect for Firefox {
 }
 
 fn main() {
+    let home = env::var("HOME")
+        .expect("HOME must be set");
     let firefox_dir = PathBuf::from("/home/wayne/projects/dockerfiles/firefox");
 
     let mgr = new_container_manager(
@@ -51,7 +53,7 @@ fn main() {
         vec![
             "/opt/firefox/firefox-bin",
             "--no-remote",
-            "--profile", "/data",
+            "--profile", format!("{}/.mozilla/firefox/profile", home).as_str(),
         ].into_iter()
             .map(String::from)
             .collect(),
