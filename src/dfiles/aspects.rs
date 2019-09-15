@@ -1,3 +1,4 @@
+use std::fmt;
 use std::path::{
     Path,
 };
@@ -7,11 +8,19 @@ use std::{
 };
 
 pub trait ContainerAspect {
+    fn name(&self) -> String;
     fn run_args(&self) -> Vec<String>;
+}
+
+impl fmt::Display for dyn ContainerAspect {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} - {:?}", self.name(), self.run_args())
+    }
 }
 
 pub struct PulseAudio {}
 impl ContainerAspect for PulseAudio {
+    fn name(&self) -> String { String::from("PulseAudio") }
     fn run_args(&self) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
@@ -46,6 +55,7 @@ impl ContainerAspect for PulseAudio {
 
 pub struct X11 {}
 impl ContainerAspect for X11 {
+    fn name(&self) -> String { String::from("X11") }
     fn run_args(&self) -> Vec<String> {
         let display = env::var("DISPLAY")
             .expect("DISPLAY must be set");
@@ -62,6 +72,7 @@ impl ContainerAspect for X11 {
 
 pub struct Video {}
 impl ContainerAspect for Video {
+    fn name(&self) -> String { String::from("Video") }
     fn run_args(&self) -> Vec<String> {
         let video_devices: Vec<String> = fs::read_dir(Path::new("/dev"))
             .expect("get entries for dir")
@@ -94,6 +105,7 @@ impl ContainerAspect for Video {
 
 pub struct DBus {}
 impl ContainerAspect for DBus {
+    fn name(&self) -> String { String::from("DBus") }
     fn run_args(&self) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
@@ -113,6 +125,7 @@ impl ContainerAspect for DBus {
 
 pub struct NetHost {}
 impl ContainerAspect for NetHost {
+    fn name(&self) -> String { String::from("NetHost") }
     fn run_args(&self) -> Vec<String> {
         vec![
             "--net", "host",
@@ -124,6 +137,7 @@ impl ContainerAspect for NetHost {
 
 pub struct SysAdmin {}
 impl ContainerAspect for SysAdmin {
+    fn name(&self) -> String { String::from("SysAdmin") }
     fn run_args(&self) -> Vec<String> {
         vec![
             "--cap-add", "SYS_ADMIN",
@@ -135,6 +149,7 @@ impl ContainerAspect for SysAdmin {
 
 pub struct TTY {}
 impl ContainerAspect for TTY {
+    fn name(&self) -> String { String::from("TTY") }
     fn run_args(&self) -> Vec<String> {
         vec![
             "-i", "-t",

@@ -12,6 +12,7 @@ use dfiles::containermanager::{
 
 struct Chrome {}
 impl aspects::ContainerAspect for Chrome {
+    fn name(&self) -> String { String::from("Chrome") }
     fn run_args(&self) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");

@@ -50,6 +50,7 @@ impl ContainerManager {
             .collect();
 
         for aspect in &self.aspects {
+            println!("{:}", aspect);
             args.extend(aspect.run_args());
         }
 

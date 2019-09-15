@@ -12,6 +12,7 @@ use dfiles::containermanager::{
 
 struct Firefox {}
 impl aspects::ContainerAspect for Firefox {
+    fn name(&self) -> String { String::from("Firefox") }
     fn run_args(&self) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
