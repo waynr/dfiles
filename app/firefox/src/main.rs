@@ -4,6 +4,10 @@ use std::path::{
 use std::{
     env,
 };
+use clap::{
+    Arg,
+    ArgMatches,
+};
 
 use dfiles::aspects;
 use dfiles::containermanager::{
@@ -13,10 +17,16 @@ use dfiles::containermanager::{
 struct Firefox {}
 impl aspects::ContainerAspect for Firefox {
     fn name(&self) -> String { String::from("Firefox") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, matches: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
-        let profile = "digitalocean";
+
+        let mut profile = "default";
+        if let Some(m) = matches {
+            if let Some(c) = m.value_of("profile") {
+                profile = c
+            }
+        }
 
         vec![
             "--cpu-shares", "512",
@@ -26,9 +36,21 @@ impl aspects::ContainerAspect for Firefox {
             "-v", format!("{h}/.mozilla/firefox/{p}:{h}/.mozilla/firefox/profile", h=home, p=profile).as_str(),
             "-v", format!("{}/downloads:/home/wayne/Downloads", home).as_str(),
 
-            "--name", "firefox",
+            "--name", format!("firefox-{}", profile).as_str(),
         ].into_iter()
             .map(String::from)
+            .collect()
+    }
+
+    fn cli_run_args(&self) -> Vec<Arg> {
+        vec![
+            Arg::with_name("profile")
+                .short("p")
+                .long("profile")
+                .help("specify the firefox profile to use")
+                .takes_value(true)
+                .default_value("default"),
+        ].into_iter()
             .collect()
     }
 }

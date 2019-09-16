@@ -82,6 +82,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "chrome"
 version = "0.1.0"
 dependencies = [
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
 ]
 
@@ -185,6 +186,7 @@ dependencies = [
 name = "firefox"
 version = "0.1.0"
 dependencies = [
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
 ]
 

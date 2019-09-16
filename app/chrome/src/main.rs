@@ -4,6 +4,9 @@ use std::path::{
 use std::{
     env,
 };
+use clap::{
+    ArgMatches,
+};
 
 use dfiles::aspects;
 use dfiles::containermanager::{
@@ -13,7 +16,7 @@ use dfiles::containermanager::{
 struct Chrome {}
 impl aspects::ContainerAspect for Chrome {
     fn name(&self) -> String { String::from("Chrome") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
 

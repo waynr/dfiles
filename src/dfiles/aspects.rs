@@ -6,22 +6,32 @@ use std::{
     env,
     fs,
 };
+use clap::{
+    Arg,
+    ArgMatches,
+};
 
 pub trait ContainerAspect {
     fn name(&self) -> String;
-    fn run_args(&self) -> Vec<String>;
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String>;
+    fn cli_run_args(&self) -> Vec<Arg> {
+        Vec::new()
+    }
+    fn cli_build_args(&self) -> Vec<Arg> {
+        Vec::new()
+    }
 }
 
 impl fmt::Display for dyn ContainerAspect {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} - {:?}", self.name(), self.run_args())
+        write!(f, "{} - {:?}", self.name(), self.run_args(None))
     }
 }
 
 pub struct PulseAudio {}
 impl ContainerAspect for PulseAudio {
     fn name(&self) -> String { String::from("PulseAudio") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
         let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR")
@@ -56,7 +66,7 @@ impl ContainerAspect for PulseAudio {
 pub struct X11 {}
 impl ContainerAspect for X11 {
     fn name(&self) -> String { String::from("X11") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let display = env::var("DISPLAY")
             .expect("DISPLAY must be set");
 
@@ -73,7 +83,7 @@ impl ContainerAspect for X11 {
 pub struct Video {}
 impl ContainerAspect for Video {
     fn name(&self) -> String { String::from("Video") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let video_devices: Vec<String> = fs::read_dir(Path::new("/dev"))
             .expect("get entries for dir")
             .filter_map(Result::ok)
@@ -106,7 +116,7 @@ impl ContainerAspect for Video {
 pub struct DBus {}
 impl ContainerAspect for DBus {
     fn name(&self) -> String { String::from("DBus") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME")
             .expect("HOME must be set");
         let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR")
@@ -126,7 +136,7 @@ impl ContainerAspect for DBus {
 pub struct NetHost {}
 impl ContainerAspect for NetHost {
     fn name(&self) -> String { String::from("NetHost") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         vec![
             "--net", "host",
         ].into_iter()
@@ -138,7 +148,7 @@ impl ContainerAspect for NetHost {
 pub struct SysAdmin {}
 impl ContainerAspect for SysAdmin {
     fn name(&self) -> String { String::from("SysAdmin") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         vec![
             "--cap-add", "SYS_ADMIN",
         ].into_iter()
@@ -150,7 +160,7 @@ impl ContainerAspect for SysAdmin {
 pub struct TTY {}
 impl ContainerAspect for TTY {
     fn name(&self) -> String { String::from("TTY") }
-    fn run_args(&self) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         vec![
             "-i", "-t",
         ].into_iter()

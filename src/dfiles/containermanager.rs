@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use clap::{
     App,
+    Arg,
+    ArgMatches,
     SubCommand,
 };
 use shiplift::BuildOptions;
@@ -40,7 +42,13 @@ impl ContainerManager {
         String::from(format!("{}:{}", self.image_name, &self.image_tag))
     }
 
-    fn run(&self, name: &str) -> Result<(), ()> {
+    fn run<'a>(&self, matches: &'a ArgMatches<'a>) -> Result<(), ()> {
+        let mut name = "dfiles";
+
+        if let Some(c) = matches.value_of("container_name") {
+            name = c
+        }
+
         let mut args: Vec<String> = vec![
             "--rm",
             "--name", name
@@ -51,7 +59,7 @@ impl ContainerManager {
 
         for aspect in &self.aspects {
             println!("{:}", aspect);
-            args.extend(aspect.run_args());
+            args.extend(aspect.run_args(Some(&matches)));
         }
 
         args.push(self.image().to_string());
@@ -76,19 +84,41 @@ impl ContainerManager {
     }
 
     pub fn execute(&self, name: &str) {
-        let matches = App::new(name)
-            .version("0.0")
-            .subcommand(SubCommand::with_name("run"))
-            .subcommand(SubCommand::with_name("build"))
-            .get_matches();
+        let mut run = SubCommand::with_name("run")
+            .about("run app in container");
+        let mut build = SubCommand::with_name("build")
+            .about("build app container");
+            ;
+
+        let mut app = App::new(name)
+            .version("0.0");
+
+        for aspect in &self.aspects {
+            for arg in aspect.cli_run_args() {
+                println!("meow");
+                run = run.arg(arg);
+            }
+            for arg in aspect.cli_build_args() {
+                build = build.arg(arg);
+            }
+        }
+
+        run = run
+            .arg(Arg::with_name("container_name")
+                .short("n")
+                .long("name")
+                .help("specify the name of the container to be run")
+                .global(true)
+                .takes_value(true));
+
+        app = app.subcommand(run).subcommand(build);
+
+        let matches = app.get_matches();
 
         match matches.subcommand() {
-            ("run", _) => self.run(&name).unwrap(),
+            ("run", Some(subm)) => self.run(&subm).unwrap(),
             ("build", _) => self.build().unwrap(),
-            (_, _) => {
-                self.build().unwrap();
-                self.run(&name).unwrap();
-            }
+            (_, _) => println!("{}", matches.usage()),
         }
     }
 }
