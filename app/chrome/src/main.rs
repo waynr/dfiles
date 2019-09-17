@@ -21,10 +21,6 @@ impl aspects::ContainerAspect for Chrome {
             .expect("HOME must be set");
 
         vec![
-            "--cpu-shares", "512",
-            "--memory", "3072mb",
-            "-v", "/dev/shm:/dev/shm",
-
             "-v", format!("{}/.config/google-chrome:/data", home).as_str(),
             "-v", format!("{}/downloads:/home/wayne/Downloads", home).as_str(),
 
@@ -51,6 +47,9 @@ fn main() {
             Box::new(aspects::DBus{}),
             Box::new(aspects::NetHost{}),
             Box::new(aspects::SysAdmin{}),
+            Box::new(aspects::Shm{}),
+            Box::new(aspects::CPUShares("512".to_string())),
+            Box::new(aspects::Memory("3072mb".to_string())),
         ],
         vec![
             "google-chrome",

@@ -29,10 +29,6 @@ impl aspects::ContainerAspect for Firefox {
         }
 
         vec![
-            "--cpu-shares", "512",
-            "--memory", "3072mb",
-            "-v", "/dev/shm:/dev/shm",
-
             "-v", format!("{h}/.mozilla/firefox/{p}:{h}/.mozilla/firefox/profile", h=home, p=profile).as_str(),
             "-v", format!("{}/downloads:/home/wayne/Downloads", home).as_str(),
 
@@ -72,6 +68,9 @@ fn main() {
             Box::new(aspects::Video{}),
             Box::new(aspects::DBus{}),
             Box::new(aspects::NetHost{}),
+            Box::new(aspects::Shm{}),
+            Box::new(aspects::CPUShares("512".to_string())),
+            Box::new(aspects::Memory("3072mb".to_string())),
         ],
         vec![
             "/opt/firefox/firefox-bin",

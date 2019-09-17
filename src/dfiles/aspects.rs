@@ -168,3 +168,39 @@ impl ContainerAspect for TTY {
             .collect()
     }
 }
+
+pub struct Shm {}
+impl ContainerAspect for Shm {
+    fn name(&self) -> String { String::from("Shm") }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        vec![
+            "-v", "/dev/shm:/dev/shm",
+        ].into_iter()
+            .map(String::from)
+            .collect()
+    }
+}
+
+pub struct CPUShares(pub String);
+impl ContainerAspect for CPUShares {
+    fn name(&self) -> String { String::from("CPUShares") }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        vec![
+            "--cpu-shares", self.0.as_str(),
+        ].into_iter()
+            .map(String::from)
+            .collect()
+    }
+}
+
+pub struct Memory(pub String);
+impl ContainerAspect for Memory {
+    fn name(&self) -> String { String::from("Memory") }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        vec![
+            "--memory", self.0.as_str(),
+        ].into_iter()
+            .map(String::from)
+            .collect()
+    }
+}
