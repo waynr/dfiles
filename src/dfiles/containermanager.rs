@@ -1,14 +1,9 @@
 use std::path::PathBuf;
 
-use clap::{
-    App,
-    Arg,
-    ArgMatches,
-    SubCommand,
-};
-use shiplift::BuildOptions;
-use super::docker;
 use super::aspects;
+use super::docker;
+use clap::{App, Arg, ArgMatches, SubCommand};
+use shiplift::BuildOptions;
 
 pub struct ContainerManager {
     path: PathBuf,
@@ -27,7 +22,7 @@ pub fn new_container_manager(
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 ) -> ContainerManager {
-    ContainerManager{
+    ContainerManager {
         path: path,
         image_name: image_name,
         image_tag: image_tag,
@@ -49,11 +44,8 @@ impl ContainerManager {
             name = c
         }
 
-        let mut args: Vec<String> = vec![
-            "--rm",
-            "--name", name
-
-        ].into_iter()
+        let mut args: Vec<String> = vec!["--rm", "--name", name]
+            .into_iter()
             .map(String::from)
             .collect();
 
@@ -84,14 +76,11 @@ impl ContainerManager {
     }
 
     pub fn execute(&self, name: &str) {
-        let mut run = SubCommand::with_name("run")
-            .about("run app in container");
-        let mut build = SubCommand::with_name("build")
-            .about("build app container");
+        let mut run = SubCommand::with_name("run").about("run app in container");
+        let mut build = SubCommand::with_name("build").about("build app container");
             ;
 
-        let mut app = App::new(name)
-            .version("0.0");
+        let mut app = App::new(name).version("0.0");
 
         for aspect in &self.aspects {
             for arg in aspect.cli_run_args() {
@@ -103,13 +92,14 @@ impl ContainerManager {
             }
         }
 
-        run = run
-            .arg(Arg::with_name("container_name")
+        run = run.arg(
+            Arg::with_name("container_name")
                 .short("n")
                 .long("name")
                 .help("specify the name of the container to be run")
                 .global(true)
-                .takes_value(true));
+                .takes_value(true),
+        );
 
         app = app.subcommand(run).subcommand(build);
 

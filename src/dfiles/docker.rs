@@ -1,11 +1,11 @@
 use std::process::Command;
 
+use serde::Deserialize;
+use serde_json::from_value;
 use shiplift::BuildOptions;
 use shiplift::Docker;
 use tokio::prelude::Future;
 use tokio::prelude::Stream;
-use serde::Deserialize;
-use serde_json::from_value;
 
 #[derive(Deserialize, Debug)]
 struct BuildOutput {
@@ -31,8 +31,7 @@ pub fn build(opts: &BuildOptions) {
     tokio::run(fut);
 }
 
-pub fn run(args: Vec<String>) 
-{
+pub fn run(args: Vec<String>) {
     let cmdstr: String = args.join(" ");
     println!("docker {}", cmdstr);
 
@@ -40,9 +39,7 @@ pub fn run(args: Vec<String>)
         .arg("run")
         .args(args)
         .spawn()
-        .expect("meow")
-        ;
+        .expect("meow");
 
-    let _ = child.wait()
-        .expect("failed waiting for child process");
+    let _ = child.wait().expect("failed waiting for child process");
 }
