@@ -1,6 +1,9 @@
-use clap::ArgMatches;
+use std::collections::HashMap;
 use std::env;
-use std::path::PathBuf;
+
+use clap::ArgMatches;
+use tar::{Builder, Header};
+use tempfile::NamedTempFile;
 
 use dfiles::aspects;
 use dfiles::containermanager::new_container_manager;
@@ -28,12 +31,23 @@ impl aspects::ContainerAspect for Chrome {
 }
 
 fn main() {
-    let chrome_dir = PathBuf::from("/home/wayne/projects/dockerfiles/chrome");
+    let tar_file = NamedTempFile::new().unwrap();
+    let mut a = Builder::new(&tar_file);
+
+    let mut context: HashMap<&str, &[u8]> = HashMap::new();
+    context.insert("Dockerfile", include_bytes!("Dockerfile"));
+    context.insert("pulse-client.conf", include_bytes!("pulse-client.conf"));
+    for (name, bs) in context {
+        let mut header = Header::new_gnu();
+        header.set_path(name).unwrap();
+        header.set_size(bs.len() as u64);
+        header.set_cksum();
+        a.append(&header, bs).unwrap();
+    }
 
     let mgr = new_container_manager(
-        chrome_dir,
-        String::from("waynr/chrome"),
-        String::from("v0"),
+        tar_file.path().to_path_buf(),
+        vec![String::from("waynr/chrome:v0")],
         Vec::new(),
         vec![
             Box::new(Chrome {}),

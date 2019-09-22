@@ -10,3 +10,5 @@ edition = "2018"
 
 dfiles = { path = "../../" }
 clap = "2.33.0"
+tempfile = "3.1.0"
+tar = "0.4.26"
