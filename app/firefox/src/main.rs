@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::env;
 
-use clap::{Arg, ArgMatches};
+use clap::ArgMatches;
 use tar::{Builder, Header};
 use tempfile::NamedTempFile;
 
@@ -13,42 +13,15 @@ impl aspects::ContainerAspect for Firefox {
     fn name(&self) -> String {
         String::from("Firefox")
     }
-    fn run_args(&self, matches: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, _matches: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME").expect("HOME must be set");
-
-        let mut profile = "default";
-        if let Some(m) = matches {
-            if let Some(c) = m.value_of("profile") {
-                profile = c
-            }
-        }
 
         vec![
             "-v",
-            format!(
-                "{h}/.mozilla/firefox/{p}:{h}/.mozilla/firefox/profile",
-                h = home,
-                p = profile
-            )
-            .as_str(),
-            "-v",
             format!("{}/downloads:/home/wayne/Downloads", home).as_str(),
-            "--name",
-            format!("firefox-{}", profile).as_str(),
         ]
         .into_iter()
         .map(String::from)
-        .collect()
-    }
-
-    fn cli_run_args(&self) -> Vec<Arg> {
-        vec![Arg::with_name("profile")
-            .short("p")
-            .long("profile")
-            .help("specify the firefox profile to use")
-            .takes_value(true)
-            .default_value("default")]
-        .into_iter()
         .collect()
     }
 }
@@ -69,6 +42,9 @@ fn main() {
         a.append(&header, bs).unwrap();
     }
 
+    let host_path_prefix = String::from(format!("{}/.mozilla/firefox", home));
+    let container_path = String::from(format!("{}/.mozilla/firefox/profile", home));
+
     let mgr = new_container_manager(
         tar_file.path().to_path_buf(),
         vec![String::from("waynr/firefox:v0")],
@@ -83,6 +59,10 @@ fn main() {
             Box::new(aspects::Shm {}),
             Box::new(aspects::CPUShares("512".to_string())),
             Box::new(aspects::Memory("3072mb".to_string())),
+            Box::new(aspects::Profile {
+                host_path_prefix: host_path_prefix,
+                container_path: container_path,
+            }),
         ],
         vec![
             "/opt/firefox/firefox-bin",

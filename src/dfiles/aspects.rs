@@ -201,3 +201,45 @@ impl ContainerAspect for Memory {
             .collect()
     }
 }
+
+pub struct Profile {
+    pub host_path_prefix: String,
+    pub container_path: String,
+}
+
+impl ContainerAspect for Profile {
+    fn name(&self) -> String {
+        String::from("Profile")
+    }
+    fn run_args(&self, matches: Option<&ArgMatches>) -> Vec<String> {
+        let mut profile = "default";
+        if let Some(m) = matches {
+            if let Some(c) = m.value_of("profile") {
+                profile = c
+            }
+        }
+
+        let host_path = format!("{}/{}", self.host_path_prefix, profile);
+
+        vec![
+            "-v",
+            format!("{}:{}", host_path, self.container_path).as_str(),
+            "--name",
+            format!("firefox-{}", profile).as_str(),
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect()
+    }
+
+    fn cli_run_args(&self) -> Vec<Arg> {
+        vec![Arg::with_name("profile")
+            .short("p")
+            .long("profile")
+            .help("specify the firefox profile to use")
+            .takes_value(true)
+            .default_value("default")]
+        .into_iter()
+        .collect()
+    }
+}
