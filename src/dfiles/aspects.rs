@@ -206,7 +206,6 @@ pub struct Profile {
     pub host_path_prefix: String,
     pub container_path: String,
 }
-
 impl ContainerAspect for Profile {
     fn name(&self) -> String {
         String::from("Profile")
@@ -241,5 +240,22 @@ impl ContainerAspect for Profile {
             .default_value("default")]
         .into_iter()
         .collect()
+    }
+}
+
+pub struct Mount(pub String, pub String);
+
+pub struct Mounts(pub Vec<Mount>);
+impl ContainerAspect for Mounts {
+    fn name(&self) -> String {
+        String::from("Mounts")
+    }
+    fn run_args(&self, _matches: Option<&ArgMatches>) -> Vec<String> {
+        let mounts = &self.0;
+        mounts
+            .into_iter()
+            .map(|m| vec![String::from("--volume"), format!("{}:{}", m.0, m.1)])
+            .flatten()
+            .collect()
     }
 }
