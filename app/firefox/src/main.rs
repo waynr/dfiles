@@ -34,6 +34,7 @@ fn main() {
         vec![String::from("waynr/firefox:v0")],
         Vec::new(),
         vec![
+            Box::new(aspects::Name("firefox".to_string())),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),

@@ -223,8 +223,6 @@ impl ContainerAspect for Profile {
         vec![
             "-v",
             format!("{}:{}", host_path, self.container_path).as_str(),
-            "--name",
-            format!("firefox-{}", profile).as_str(),
         ]
         .into_iter()
         .map(String::from)
@@ -235,7 +233,7 @@ impl ContainerAspect for Profile {
         vec![Arg::with_name("profile")
             .short("p")
             .long("profile")
-            .help("specify the firefox profile to use")
+            .help("specify the profile to use")
             .takes_value(true)
             .default_value("default")]
         .into_iter()
@@ -257,5 +255,36 @@ impl ContainerAspect for Mounts {
             .map(|m| vec![String::from("--volume"), format!("{}:{}", m.0, m.1)])
             .flatten()
             .collect()
+    }
+}
+
+pub struct Name(pub String);
+impl ContainerAspect for Name {
+    fn name(&self) -> String {
+        String::from("Name")
+    }
+    fn run_args(&self, matches: Option<&ArgMatches>) -> Vec<String> {
+        let mut container_name: String = "default".to_string();
+        if let Some(m) = matches {
+            if let Some(c) = m.value_of("container_name") {
+                container_name = c.to_string();
+            } else if let Some(c) = m.value_of("profile") {
+                container_name = format!("{}-{}", self.0, c);
+            }
+        }
+        vec!["--name".to_string(), container_name]
+            .into_iter()
+            .collect()
+    }
+
+    fn cli_run_args(&self) -> Vec<Arg> {
+        vec![Arg::with_name("container_name")
+            .short("n")
+            .long("name")
+            .help("specify the name of the container to be run")
+            .global(true)
+            .takes_value(true)]
+        .into_iter()
+        .collect()
     }
 }

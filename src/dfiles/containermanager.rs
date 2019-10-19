@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use super::aspects;
 use super::docker;
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
 
 pub struct ContainerManager {
@@ -36,16 +36,7 @@ impl ContainerManager {
     }
 
     fn run<'a>(&self, matches: &'a ArgMatches<'a>) -> Result<(), ()> {
-        let mut name = "dfiles";
-
-        if let Some(c) = matches.value_of("container_name") {
-            name = c
-        }
-
-        let mut args: Vec<String> = vec!["--rm", "--name", name]
-            .into_iter()
-            .map(String::from)
-            .collect();
+        let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
 
         for aspect in &self.aspects {
             println!("{:}", aspect);
@@ -94,15 +85,6 @@ impl ContainerManager {
                 build = build.arg(arg);
             }
         }
-
-        run = run.arg(
-            Arg::with_name("container_name")
-                .short("n")
-                .long("name")
-                .help("specify the name of the container to be run")
-                .global(true)
-                .takes_value(true),
-        );
 
         app = app.subcommand(run).subcommand(build);
 

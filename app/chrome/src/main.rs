@@ -34,6 +34,7 @@ fn main() {
         vec![String::from("waynr/chrome:v0")],
         Vec::new(),
         vec![
+            Box::new(aspects::Name("chrome".to_string())),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
