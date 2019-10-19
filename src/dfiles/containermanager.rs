@@ -78,7 +78,6 @@ impl ContainerManager {
 
         for aspect in &self.aspects {
             for arg in aspect.cli_run_args() {
-                println!("meow");
                 run = run.arg(arg);
             }
             for arg in aspect.cli_build_args() {
