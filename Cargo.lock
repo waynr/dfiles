@@ -1115,6 +1115,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "signal"
+version = "0.1.0"
+dependencies = [
+ "dfiles 0.1.0",
+ "tar 0.4.26 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "slab"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
