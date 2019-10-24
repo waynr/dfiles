@@ -1,3 +1,4 @@
+FROM dfilesfiles:0.1.0 as dfilesfiles 
 FROM debian/stretch/wayne:0
 MAINTAINER Wayne Warren
 
@@ -28,7 +29,7 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /src/*.deb
 
 
-COPY pulse-client.conf /etc/pulse/client.conf
+COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
 
 USER wayne
 

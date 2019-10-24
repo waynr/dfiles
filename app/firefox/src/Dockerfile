@@ -1,3 +1,4 @@
+FROM dfilesfiles:0.1.0 as dfilesfiles 
 FROM debian/stretch/wayne:0
 
 ARG release=67.0b16
@@ -18,9 +19,8 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm -rf /src/*.deb
 
-COPY pulse-client.conf /etc/pulse/client.conf
+COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
 
 USER wayne
 
 RUN mkdir -p /home/wayne/.mozilla/firefox
-

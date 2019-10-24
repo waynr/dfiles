@@ -136,6 +136,7 @@ name = "chrome"
 version = "0.1.0"
 dependencies = [
  "dfiles 0.1.0",
+ "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -327,6 +328,7 @@ name = "firefox"
 version = "0.1.0"
 dependencies = [
  "dfiles 0.1.0",
+ "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -1126,6 +1128,7 @@ name = "signal"
 version = "0.1.0"
 dependencies = [
  "dfiles 0.1.0",
+ "dfilesfiles 0.1.0",
 ]
 
 [[package]]

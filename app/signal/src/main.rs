@@ -3,16 +3,13 @@ use std::env;
 
 use dfiles::aspects;
 use dfiles::containermanager::new_container_manager;
+use dfilesfiles::dfiles_files_container_mgr;
 
 fn main() {
     let mut context: HashMap<String, String> = HashMap::new();
     context.insert(
         "Dockerfile".to_string(),
         include_str!("Dockerfile").to_string(),
-    );
-    context.insert(
-        "pulse-client.conf".to_string(),
-        include_str!("pulse-client.conf").to_string(),
     );
 
     let home = env::var("HOME").expect("HOME must be set");
@@ -22,10 +19,12 @@ fn main() {
     let host_downloads_path = format!("{}/downloads", home);
     let container_downloads_path = format!("{}/Downloads", home);
 
+    let dfilesfiles_mgr = dfiles_files_container_mgr();
+
     let mgr = new_container_manager(
         context,
         vec![String::from("waynr/signal:v0")],
-        Vec::new(),
+        vec![Box::new(dfilesfiles_mgr)],
         vec![
             Box::new(aspects::Name("signal".to_string())),
             Box::new(aspects::PulseAudio {}),
