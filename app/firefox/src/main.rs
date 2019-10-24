@@ -29,9 +29,11 @@ fn main() {
     let host_downloads_path = format!("{}/downloads", home);
     let container_downloads_path = format!("{}/Downloads", home);
 
+    let version = env!("CARGO_PKG_VERSION");
+
     let mgr = new_container_manager(
         tar_file.path().to_path_buf(),
-        vec![String::from("waynr/firefox:v0")],
+        vec![format!("{}:{}", "waynr/firefox", version)],
         Vec::new(),
         vec![
             Box::new(aspects::Name("firefox".to_string())),
