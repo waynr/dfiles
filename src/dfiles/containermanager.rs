@@ -33,6 +33,19 @@ pub fn new_container_manager(
     }
 }
 
+pub fn noop_container_manager(
+    context: HashMap<String, String>,
+    tags: Vec<String>,
+) -> ContainerManager {
+    ContainerManager {
+        context: context,
+        tags: tags,
+        args: Vec::new(),
+        aspects: Vec::new(),
+        dependencies: Vec::new(),
+    }
+}
+
 impl ContainerManager {
     fn image(&self) -> String {
         self.tags[0].clone()
