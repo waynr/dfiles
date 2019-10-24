@@ -1,5 +1,8 @@
+use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+
+use tar::{Builder, Header};
+use tempfile::NamedTempFile;
 
 use super::aspects;
 use super::docker;
@@ -7,7 +10,7 @@ use clap::{App, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
 
 pub struct ContainerManager {
-    context_tarball: PathBuf,
+    context: HashMap<String, String>,
     tags: Vec<String>,
     dependencies: Vec<Box<ContainerManager>>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
@@ -15,14 +18,14 @@ pub struct ContainerManager {
 }
 
 pub fn new_container_manager(
-    context_tarball: PathBuf,
+    context: HashMap<String, String>,
     tags: Vec<String>,
     dependencies: Vec<Box<ContainerManager>>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 ) -> ContainerManager {
     ContainerManager {
-        context_tarball: context_tarball,
+        context: context,
         tags: tags,
         dependencies: dependencies,
         aspects: aspects,
@@ -56,13 +59,26 @@ impl ContainerManager {
     }
 
     fn build(&self) -> Result<(), ()> {
+        self.build_deps();
+        let tar_file = NamedTempFile::new().unwrap();
+        let mut a = Builder::new(&tar_file);
+
+        for (name, bs) in &self.context {
+            let mut header = Header::new_gnu();
+            header.set_path(name).unwrap();
+            header.set_size(bs.len() as u64);
+            header.set_cksum();
+            a.append(&header, bs.as_bytes()).unwrap();
+        }
+
         let docker = Docker::connect_with_defaults().unwrap();
         let options = ContainerBuildOptions {
             dockerfile: "Dockerfile".into(),
             t: self.tags.clone(),
             ..ContainerBuildOptions::default()
         };
-        let res = docker.build_image(options, &self.context_tarball).unwrap();
+
+        let res = docker.build_image(options, tar_file.path()).unwrap();
         for line in BufReader::new(res).lines() {
             let buf = line.unwrap();
             println!("{}", &buf);
