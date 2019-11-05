@@ -30,6 +30,7 @@ fn main() {
         vec![
             Box::new(aspects::Name("steam".to_string())),
             Box::new(aspects::PulseAudio {}),
+            Box::new(aspects::Alsa {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),
