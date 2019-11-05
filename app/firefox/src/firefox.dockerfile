@@ -1,7 +1,7 @@
 FROM dfilesfiles:0.1.0 as dfilesfiles 
 FROM debian/stretch/wayne:0
 
-ARG release=67.0b16
+ARG release=70.0
 
 WORKDIR /opt/
 ADD https://archive.mozilla.org/pub/firefox/releases/${release}/linux-x86_64/en-US/firefox-${release}.tar.bz2 ./
