@@ -1,13 +1,20 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 
+use clap::{App, ArgMatches, SubCommand};
+use dockworker::{ContainerBuildOptions, Docker};
+use serde::Deserialize;
+use serde_json::from_str;
 use tar::{Builder, Header};
 use tempfile::NamedTempFile;
 
 use super::aspects;
 use super::docker;
-use clap::{App, ArgMatches, SubCommand};
-use dockworker::{ContainerBuildOptions, Docker};
+
+#[derive(Deserialize, Debug)]
+struct BuildOutput {
+    stream: String,
+}
 
 pub struct ContainerManager {
     context: HashMap<String, String>,
@@ -92,10 +99,12 @@ impl ContainerManager {
         };
 
         let res = docker.build_image(options, tar_file.path()).unwrap();
-        for line in BufReader::new(res).lines() {
-            let buf = line.unwrap();
-            println!("{}", &buf);
-        }
+        BufReader::new(res)
+            .lines()
+            .filter_map(Result::ok)
+            .map(|l| from_str::<BuildOutput>(&l))
+            .filter_map(Result::ok)
+            .for_each(|bo: BuildOutput| print!("{}", bo.stream));
         Ok(())
     }
 
