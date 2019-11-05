@@ -9,7 +9,7 @@ fn main() {
     let mut context: HashMap<String, String> = HashMap::new();
     context.insert(
         "Dockerfile".to_string(),
-        include_str!("Dockerfile").to_string(),
+        include_str!("firefox.dockerfile").to_string(),
     );
 
     let home = env::var("HOME").expect("HOME must be set");
