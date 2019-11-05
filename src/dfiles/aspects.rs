@@ -52,6 +52,19 @@ impl ContainerAspect for PulseAudio {
     }
 }
 
+pub struct Alsa {}
+impl ContainerAspect for Alsa {
+    fn name(&self) -> String {
+        String::from("Alsa")
+    }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        vec!["--device", "/dev/snd"]
+            .into_iter()
+            .map(String::from)
+            .collect()
+    }
+}
+
 pub struct X11 {}
 impl ContainerAspect for X11 {
     fn name(&self) -> String {
