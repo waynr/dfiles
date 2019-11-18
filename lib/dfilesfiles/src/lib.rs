@@ -10,6 +10,10 @@ pub fn dfiles_files_container_mgr() -> ContainerManager {
         include_str!("dfilesfiles.dockerfile").to_string(),
     );
     context.insert(
+        "entrypoint.bash".to_string(),
+        include_str!("entrypoint.bash").to_string(),
+    );
+    context.insert(
         "pulse-client.conf".to_string(),
         include_str!("pulse-client.conf").to_string(),
     );
