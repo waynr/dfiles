@@ -1,5 +1,5 @@
 FROM dfilesfiles:0.1.0 as dfilesfiles 
-FROM debian/stretch/wayne:0
+FROM debian:buster
 
 ARG release=70.0
 
@@ -11,16 +11,16 @@ RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox
 
 RUN apt-get update && apt-get install -y \
 	dbus-x11 \
-	openjdk-8-jre \
 	firefox-esr \
+	libpulse0 \
 	pulseaudio \
 	--no-install-recommends \
 	&& apt-get purge --auto-remove -y curl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm -rf /src/*.deb
 
+# pulseaudio aspect
 COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
 
-USER wayne
-
-RUN mkdir -p /home/wayne/.mozilla/firefox
+# default for all dfiles containers
+COPY --from=dfilesfiles /entrypoint.bash /entrypoint.bash
