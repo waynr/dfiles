@@ -23,7 +23,8 @@ fn main() {
 
     let mgr = new_container_manager(
         context,
-        vec![String::from("waynr/chrome:v0")],
+        //vec![String::from("waynr/chrome:v0")],
+        vec![String::from("debian/stretch/wayne/chrome:0")],
         vec![Box::new(dfilesfiles_mgr)],
         vec![
             Box::new(aspects::Name("chrome".to_string())),
@@ -45,10 +46,14 @@ fn main() {
                 container_downloads_path,
             )])),
         ],
-        vec!["google-chrome", "--user-data-dir=/data"]
-            .into_iter()
-            .map(String::from)
-            .collect(),
+        vec![
+            "google-chrome",
+            "--user-data-dir=/data",
+            "--enable-webrtc-apm-in-audio-service",
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
     );
 
     mgr.execute("chrome");
