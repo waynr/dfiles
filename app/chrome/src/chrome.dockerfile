@@ -1,5 +1,5 @@
 FROM dfilesfiles:0.1.0 as dfilesfiles 
-FROM debian/buster/wayne:0
+FROM debian/stretch/wayne:0
 MAINTAINER Wayne Warren
 
 ADD https://dl.google.com/linux/direct/google-talkplugin_current_amd64.deb /src/google-talkplugin_current_amd64.deb
@@ -14,14 +14,14 @@ RUN apt-get update && apt-get install -y \
 	libgl1-mesa-glx \
 	libgtk2.0-0 \
 	libpulse0 \
-	pulseaudio \
 	libv4l-0 \
+	openjdk-8-jre \
 	fonts-symbola \
 	--no-install-recommends \
 	&& curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
 	&& echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google.list \
 	&& apt-get update && apt-get install -y \
-	google-chrome-unstable \
+	google-chrome-stable \
 	--no-install-recommends \
 	&& dpkg -i '/src/google-talkplugin_current_amd64.deb' \
 	&& apt-get purge --auto-remove -y curl \
