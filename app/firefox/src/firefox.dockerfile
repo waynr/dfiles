@@ -10,6 +10,10 @@ RUN tar -xjvf /opt/firefox-${release}.tar.bz2
 RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox
 
 RUN apt-get update && apt-get install -y \
+	apt-utils \
+	apt-transport-https \
+	apt \
+	bzip2 \
 	dbus-x11 \
 	firefox-esr \
 	libpulse0 \
