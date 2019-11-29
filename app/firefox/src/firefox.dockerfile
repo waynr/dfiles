@@ -1,6 +1,16 @@
 FROM dfilesfiles:0.1.0 as dfilesfiles 
 FROM debian:buster
 
+RUN apt-get update && apt-get install -y \
+	--no-install-recommends \
+	apt-utils \
+	apt-transport-https \
+	apt \
+	locales \
+	sudo \
+	bzip2
+
+# firefox-specific stuff
 ARG release=70.0
 
 WORKDIR /opt/
@@ -10,10 +20,6 @@ RUN tar -xjvf /opt/firefox-${release}.tar.bz2
 RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox
 
 RUN apt-get update && apt-get install -y \
-	apt-utils \
-	apt-transport-https \
-	apt \
-	bzip2 \
 	dbus-x11 \
 	firefox-esr \
 	libpulse0 \
