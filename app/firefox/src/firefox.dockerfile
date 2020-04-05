@@ -31,6 +31,8 @@ RUN apt-get update && apt-get install -y \
 
 # pulseaudio aspect
 COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
+RUN chmod 655 /etc/pulse
+RUN chmod 644 /etc/pulse/client.conf
 
 # default for all dfiles containers
 COPY --from=dfilesfiles /entrypoint.bash /entrypoint.bash

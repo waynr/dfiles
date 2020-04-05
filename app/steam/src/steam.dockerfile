@@ -26,6 +26,8 @@ ADD https://steamcdn-a.akamaihd.net/client/installer/steam.deb /var/lib/steam.de
 RUN dpkg -i /var/lib/steam.deb
 
 COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
+RUN chmod 655 /etc/pulse
+RUN chmod 644 /etc/pulse/client.conf
 
 WORKDIR /var/lib/steam
 

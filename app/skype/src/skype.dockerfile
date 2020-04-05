@@ -39,6 +39,8 @@ RUN dpkg -i '/var/skypeforlinux-64.deb'
 
 
 COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
+RUN chmod 655 /etc/pulse
+RUN chmod 644 /etc/pulse/client.conf
 
 USER wayne
 

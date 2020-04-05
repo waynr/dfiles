@@ -15,5 +15,7 @@ RUN apt-get update && apt-get install -y \
 	&& rm -rf /src/*.deb
 
 COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
+RUN chmod 655 /etc/pulse
+RUN chmod 644 /etc/pulse/client.conf
 
 USER wayne
