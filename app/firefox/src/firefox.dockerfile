@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 	bzip2
 
 # firefox-specific stuff
-ARG release=70.0
+ARG release=74.0
 
 WORKDIR /opt/
 ADD https://archive.mozilla.org/pub/firefox/releases/${release}/linux-x86_64/en-US/firefox-${release}.tar.bz2 ./
