@@ -1,5 +1,5 @@
 FROM dfilesfiles:0.1.0 as dfilesfiles 
-FROM debian:buster
+FROM debian/stretch/wayne:0
 
 RUN apt-get update && apt-get install -y \
 	--no-install-recommends \
