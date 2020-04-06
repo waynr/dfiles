@@ -3,6 +3,16 @@ use std::fmt;
 use std::path::Path;
 use std::{env, fs};
 
+pub struct DockerfileSnippet {
+    order: u32,
+    snippet: String,
+}
+
+pub struct ContainerFile {
+    container_path: String,
+    contents: String,
+}
+
 pub trait ContainerAspect {
     fn name(&self) -> String;
     fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String>;
@@ -10,6 +20,12 @@ pub trait ContainerAspect {
         Vec::new()
     }
     fn cli_build_args(&self) -> Vec<Arg> {
+        Vec::new()
+    }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        Vec::new()
+    }
+    fn container_files(&self) -> Vec<ContainerFile> {
         Vec::new()
     }
 }
@@ -49,6 +65,51 @@ impl ContainerAspect for PulseAudio {
         .into_iter()
         .map(String::from)
         .collect()
+    }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        vec![
+            DockerfileSnippet {
+                order: 75,
+                snippet: String::from(
+                    "
+COPY /pulse-client.conf /etc/pulse/client.conf
+RUN chmod 655 /etc/pulse
+RUN chmod 644 /etc/pulse/client.conf
+                ",
+                ),
+            },
+            DockerfileSnippet {
+                order: 70,
+                snippet: String::from(
+                    "
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    libpulse0 \
+    && apt-get purge --autoremove \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /src/*.deb
+                ",
+                ),
+            },
+        ]
+    }
+    fn container_files(&self) -> Vec<ContainerFile> {
+        vec![ContainerFile {
+            container_path: String::from("/etc/pulse/client.conf"),
+            contents: String::from(
+                "
+# Connect to the host's server using the mounted UNIX socket
+default-server = unix:/run/user/11571/pulse/native
+
+# Prevent a server running in the container
+autospawn = no
+daemon-binary = /bin/true
+
+# Prevent the use of shared memory
+enable-shm = false
+            ",
+            ),
+        }]
     }
 }
 
