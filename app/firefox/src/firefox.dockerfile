@@ -1,5 +1,5 @@
 FROM dfilesfiles:0.1.0 as dfilesfiles 
-FROM debian/stretch/wayne:0
+FROM debian/buster/wayne:0
 
 RUN apt-get update && apt-get install -y \
 	--no-install-recommends \
@@ -34,5 +34,6 @@ COPY --from=dfilesfiles /pulse-client.conf /etc/pulse/client.conf
 RUN chmod 655 /etc/pulse
 RUN chmod 644 /etc/pulse/client.conf
 
-# default for all dfiles containers
+USER wayne
+
 COPY --from=dfilesfiles /entrypoint.bash /entrypoint.bash
