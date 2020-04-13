@@ -4,8 +4,8 @@ use std::path::Path;
 use std::{env, fs};
 
 pub struct DockerfileSnippet {
-    order: u32,
-    snippet: String,
+    pub order: u8,
+    pub content: String,
 }
 
 pub struct ContainerFile {
@@ -70,25 +70,21 @@ impl ContainerAspect for PulseAudio {
         vec![
             DockerfileSnippet {
                 order: 75,
-                snippet: String::from(
-                    "
-COPY /pulse-client.conf /etc/pulse/client.conf
+                content: String::from(
+                    r#"COPY /pulse-client.conf /etc/pulse/client.conf
 RUN chmod 655 /etc/pulse
-RUN chmod 644 /etc/pulse/client.conf
-                ",
+RUN chmod 644 /etc/pulse/client.conf"#,
                 ),
             },
             DockerfileSnippet {
                 order: 70,
-                snippet: String::from(
-                    "
-RUN apt-get update && apt-get install -y \
+                content: String::from(
+                    r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libpulse0 \
-    && apt-get purge --autoremove \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb
-                ",
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
                 ),
             },
         ]

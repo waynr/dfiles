@@ -24,7 +24,7 @@ fn main() {
 
     let dfilesfiles_mgr = dfiles_files_container_mgr();
 
-    let mgr = new_container_manager(
+    let mut mgr = new_container_manager(
         context,
         vec![String::from("waynr/chrome:v0")],
         vec![Box::new(dfilesfiles_mgr)],

@@ -1,4 +1,7 @@
+use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::error::Error;
+use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 use clap::{App, ArgMatches, SubCommand};
@@ -108,11 +111,43 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn generate_archive(&self) -> Result<(), ()> {
+    fn generate_archive(&mut self) -> Result<(), Box<dyn Error>> {
+        let tar_file = File::create("whatever.tar")?;
+        let mut a = Builder::new(&tar_file);
+
+        let mut contents: BTreeMap<u8, String> = BTreeMap::new();
+        for aspect in &self.aspects {
+            let dockerfile_snippets = aspect.dockerfile_snippets();
+            for snippet in dockerfile_snippets {
+                contents
+                    .entry(snippet.order)
+                    .and_modify(|e| e.push_str(snippet.content.as_str()))
+                    .or_insert(snippet.content);
+            }
+        }
+
+        let mut dockerfile_contents = String::new();
+
+        for content in contents.values() {
+            dockerfile_contents.push_str(content.as_str());
+            dockerfile_contents.push('\n');
+            dockerfile_contents.push('\n');
+        }
+        self.context
+            .insert("Dockerfile".to_string(), dockerfile_contents);
+
+        for (name, bs) in &self.context {
+            let mut header = Header::new_gnu();
+            header.set_path(name).unwrap();
+            header.set_size(bs.len() as u64);
+            header.set_cksum();
+            a.append(&header, bs.as_bytes()).unwrap();
+        }
+
         Ok(())
     }
 
-    pub fn execute(&self, name: &str) {
+    pub fn execute(&mut self, name: &str) {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut build = SubCommand::with_name("build").about("build app container");
         let generate_archive = SubCommand::with_name("generate-archive")
