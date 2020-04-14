@@ -195,6 +195,19 @@ impl ContainerAspect for DBus {
         .map(String::from)
         .collect()
     }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        vec![DockerfileSnippet {
+            order: 71,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    dbus-x11 \
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
+            ),
+        }]
+    }
 }
 
 pub struct NetHost {}
