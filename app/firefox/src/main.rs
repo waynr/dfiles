@@ -1,9 +1,59 @@
+use clap::ArgMatches;
 use std::collections::HashMap;
 use std::env;
 
 use dfiles::aspects;
 use dfiles::containermanager::new_container_manager;
 use dfilesfiles::dfiles_files_container_mgr;
+
+struct Firefox {}
+
+impl aspects::ContainerAspect for Firefox {
+    fn name(&self) -> String {
+        String::from("firefox")
+    }
+
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+
+    fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
+        vec![
+            aspects::DockerfileSnippet {
+                order: 99,
+                content: String::from("USER wayne"),
+            },
+            aspects::DockerfileSnippet {
+                order: 00,
+                content: String::from(
+                    r#"FROM dfilesfiles:0.1.0 as dfilesfiles 
+FROM debian/buster/wayne:0"#,
+                ),
+            },
+            aspects::DockerfileSnippet {
+                order: 91,
+                content: format!(
+                    r#"WORKDIR /opt/
+ADD https://archive.mozilla.org/pub/firefox/releases/{release}/linux-x86_64/en-US/firefox-{release}.tar.bz2 ./
+RUN tar -xjvf /opt/firefox-{release}.tar.bz2
+RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
+                    release = "75.0"
+                ),
+            },
+            aspects::DockerfileSnippet {
+                order: 90,
+                content: String::from(
+                    r#"RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    firefox-esr \
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
+                ),
+            },
+        ]
+    }
+}
 
 fn main() {
     let mut context: HashMap<String, String> = HashMap::new();
@@ -31,6 +81,7 @@ fn main() {
         vec![format!("{}:{}", "waynr/firefox", version)],
         vec![Box::new(dfilesfiles_mgr)],
         vec![
+            Box::new(Firefox {}),
             Box::new(aspects::Name("firefox".to_string())),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
