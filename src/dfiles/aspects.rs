@@ -1,7 +1,9 @@
-use clap::{Arg, ArgMatches};
 use std::fmt;
 use std::path::Path;
 use std::{env, fs};
+
+use clap::{Arg, ArgMatches};
+use users;
 
 pub struct DockerfileSnippet {
     pub order: u8,
@@ -369,5 +371,48 @@ impl ContainerAspect for Name {
             .takes_value(true)]
         .into_iter()
         .collect()
+    }
+}
+
+pub struct CurrentUser {}
+
+impl ContainerAspect for CurrentUser {
+    fn name(&self) -> String {
+        let uid = users::get_current_uid();
+        let user = users::get_user_by_uid(uid).unwrap();
+        format!("User: {}", user.name().to_str().unwrap())
+    }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        let uid = users::get_current_uid();
+        let gid = users::get_current_gid();
+        let user = users::get_user_by_uid(uid).unwrap();
+        let group = users::get_group_by_gid(gid).unwrap();
+        vec![
+            DockerfileSnippet {
+                order: 80,
+                content: format!(
+                    r#"RUN addgroup --gid {gid} {group} \
+    &&  adduser --home /home/{user} \
+                --shell /bin/bash \
+                --uid {uid} \
+                --gid {gid} \
+                --disabled-password {user}
+RUN mkdir -p /data && chown {user}.{user} /data
+RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
+"#,
+                    gid = gid,
+                    group = group.name().to_str().unwrap(),
+                    user = user.name().to_str().unwrap(),
+                    uid = uid,
+                ),
+            },
+            DockerfileSnippet {
+                order: 98,
+                content: format!("USER {}", user.name().to_str().unwrap()),
+            },
+        ]
     }
 }
