@@ -418,3 +418,59 @@ RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
         ]
     }
 }
+
+// TODO: Locale should detect the host's locale settings and transfer those into the container at
+// build time; should probably be configurable by command line flag but we don't yet support
+// built-time command line flags and I'm feeling really lazy and just want to dispense entirely
+// with my old base docker images so for now it's only configurable at compile time.
+pub struct Locale {
+    pub language: String,
+    pub territory: String,
+    pub codeset: String,
+}
+
+impl ContainerAspect for Locale {
+    fn name(&self) -> String {
+        format!("AutoLocale")
+    }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        let locale = format!("{}_{}.{}", self.language, self.territory, self.codeset);
+        vec![DockerfileSnippet {
+            order: 88,
+            content: format!(
+                r#"RUN echo {locale} > /etc/locale.gen
+RUN locale-gen
+RUN echo LANG="{locale}" > /etc/default/locale
+ENV LANG={locale}
+"#,
+                locale = locale,
+            ),
+        }]
+    }
+}
+
+pub struct Timezone(pub String);
+
+impl ContainerAspect for Timezone {
+    fn name(&self) -> String {
+        format!("Timezone")
+    }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        vec![DockerfileSnippet {
+            order: 88,
+            content: format!(
+                r#" ENV TZ={tz}
+RUN ln -snf /usr/share/zoneinfo/{tz} /etc/localtime
+RUN echo {tz} > /etc/timezone
+"#,
+                tz = self.0,
+            ),
+        }]
+    }
+}
