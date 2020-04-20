@@ -400,6 +400,8 @@ impl ContainerAspect for CurrentUser {
                 --uid {uid} \
                 --gid {gid} \
                 --disabled-password {user}
+RUN adduser {user} audio
+RUN adduser {user} video
 RUN mkdir -p /data && chown {user}.{user} /data
 RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
 "#,
