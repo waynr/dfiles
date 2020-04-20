@@ -43,6 +43,23 @@ pub fn new_container_manager(
     }
 }
 
+pub fn default_debian_container_manager(
+    context: HashMap<String, String>,
+    tags: Vec<String>,
+    dependencies: Vec<Box<ContainerManager>>,
+    mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+    args: Vec<String>,
+) -> ContainerManager {
+    aspects.insert(0, Box::new(Debian {}));
+    ContainerManager {
+        context: context,
+        tags: tags,
+        dependencies: dependencies,
+        aspects: aspects,
+        args: args,
+    }
+}
+
 pub fn noop_container_manager(
     context: HashMap<String, String>,
     tags: Vec<String>,
@@ -177,5 +194,48 @@ impl ContainerManager {
             ("generate-archive", _) => self.generate_archive().unwrap(),
             (_, _) => println!("{}", matches.usage()),
         }
+    }
+}
+
+struct Debian {}
+
+impl aspects::ContainerAspect for Debian {
+    fn name(&self) -> String {
+        String::from("Debian")
+    }
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+    fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
+        vec![
+            aspects::DockerfileSnippet {
+                order: 00,
+                content: String::from("FROM debian:buster"),
+            },
+            aspects::DockerfileSnippet {
+                order: 2,
+                content: String::from(
+                    r#"RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    apt-utils \
+    apt-transport-https \
+    apt \
+    bzip2 \
+    ca-certificates \
+    curl \
+    debian-goodies \
+    dirmngr \
+    gnupg \
+    keychain \
+    lsb-release \
+    locales \
+    lsof \
+    procps \
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
+                ),
+            },
+        ]
     }
 }
