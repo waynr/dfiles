@@ -11,8 +11,8 @@ pub struct DockerfileSnippet {
 }
 
 pub struct ContainerFile {
-    container_path: String,
-    contents: String,
+    pub container_path: String,
+    pub contents: String,
 }
 
 pub trait ContainerAspect {

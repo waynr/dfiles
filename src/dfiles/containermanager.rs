@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 
 use clap::{App, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
@@ -98,18 +98,10 @@ impl ContainerManager {
         }
     }
 
-    fn build(&self) -> Result<(), ()> {
+    fn build(&self) -> Result<(), Box<dyn Error>> {
         self.build_deps();
-        let tar_file = NamedTempFile::new().unwrap();
-        let mut a = Builder::new(&tar_file);
-
-        for (name, bs) in &self.context {
-            let mut header = Header::new_gnu();
-            header.set_path(name).unwrap();
-            header.set_size(bs.len() as u64);
-            header.set_cksum();
-            a.append(&header, bs.as_bytes()).unwrap();
-        }
+        let mut tar_file = NamedTempFile::new().unwrap();
+        self.generate_archive_impl(&mut tar_file.as_file_mut())?;
 
         let docker = Docker::connect_with_defaults().unwrap();
         let options = ContainerBuildOptions {
@@ -128,9 +120,8 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn generate_archive(&mut self) -> Result<(), Box<dyn Error>> {
-        let tar_file = File::create("whatever.tar")?;
-        let mut a = Builder::new(&tar_file);
+    fn generate_archive_impl(&self, f: &mut std::fs::File) -> Result<(), Box<dyn Error>> {
+        let mut a = Builder::new(f);
 
         let mut contents: BTreeMap<u8, String> = BTreeMap::new();
         for aspect in &self.aspects {
@@ -144,6 +135,9 @@ impl ContainerManager {
                     })
                     .or_insert(snippet.content);
             }
+            for file in aspect.container_files() {
+                add_file_to_archive(&mut a, &file.container_path, &file.contents)?;
+            }
         }
 
         let mut dockerfile_contents = String::new();
@@ -153,18 +147,18 @@ impl ContainerManager {
             dockerfile_contents.push('\n');
             dockerfile_contents.push('\n');
         }
-        self.context
-            .insert("Dockerfile".to_string(), dockerfile_contents);
+
+        add_file_to_archive(&mut a, "Dockerfile", &dockerfile_contents)?;
 
         for (name, bs) in &self.context {
-            let mut header = Header::new_gnu();
-            header.set_path(name).unwrap();
-            header.set_size(bs.len() as u64);
-            header.set_cksum();
-            a.append(&header, bs.as_bytes()).unwrap();
+            add_file_to_archive(&mut a, name, bs)?;
         }
-
         Ok(())
+    }
+
+    fn generate_archive(&self) -> Result<(), Box<dyn Error>> {
+        let mut tar_file = File::create("whatever.tar")?;
+        self.generate_archive_impl(&mut tar_file)
     }
 
     pub fn execute(&mut self, name: &str) {
@@ -198,6 +192,18 @@ impl ContainerManager {
             (_, _) => println!("{}", matches.usage()),
         }
     }
+}
+
+fn add_file_to_archive<W: Write>(
+    b: &mut Builder<W>,
+    name: &str,
+    contents: &str,
+) -> Result<(), std::io::Error> {
+    let mut header = Header::new_gnu();
+    header.set_path(name).unwrap();
+    header.set_size(contents.len() as u64);
+    header.set_cksum();
+    b.append(&header, contents.as_bytes())
 }
 
 struct Debian {}
