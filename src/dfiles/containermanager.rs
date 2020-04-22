@@ -213,6 +213,20 @@ impl aspects::ContainerAspect for Debian {
                 content: String::from("FROM debian:buster"),
             },
             aspects::DockerfileSnippet {
+                order: 3,
+                content: String::from(
+                    r#"# Useful language packs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  fonts-arphic-bkai00mp \
+  fonts-arphic-bsmi00lp \
+  fonts-arphic-gbsn00lp \
+  fonts-arphic-gbsn00lp \
+  \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb"#,
+                ),
+            },
+            aspects::DockerfileSnippet {
                 order: 2,
                 content: String::from(
                     r#"RUN apt-get update && apt-get install -y \
