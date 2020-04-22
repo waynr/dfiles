@@ -464,7 +464,7 @@ impl ContainerAspect for Timezone {
         vec![DockerfileSnippet {
             order: 88,
             content: format!(
-                r#" ENV TZ={tz}
+                r#"ENV TZ={tz}
 RUN ln -snf /usr/share/zoneinfo/{tz} /etc/localtime
 RUN echo {tz} > /etc/timezone
 "#,
