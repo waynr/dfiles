@@ -138,7 +138,10 @@ impl ContainerManager {
             for snippet in dockerfile_snippets {
                 contents
                     .entry(snippet.order)
-                    .and_modify(|e| e.push_str(snippet.content.as_str()))
+                    .and_modify(|e| {
+                        e.push('\n');
+                        e.push_str(snippet.content.as_str());
+                    })
                     .or_insert(snippet.content);
             }
         }
