@@ -73,7 +73,7 @@ impl ContainerAspect for PulseAudio {
             DockerfileSnippet {
                 order: 75,
                 content: String::from(
-                    r#"COPY /pulse-client.conf /etc/pulse/client.conf
+                    r#"COPY /etc/pulse/client.conf /etc/pulse/client.conf
 RUN chmod 655 /etc/pulse
 RUN chmod 644 /etc/pulse/client.conf"#,
                 ),
@@ -93,10 +93,9 @@ RUN chmod 644 /etc/pulse/client.conf"#,
     }
     fn container_files(&self) -> Vec<ContainerFile> {
         vec![ContainerFile {
-            container_path: String::from("/etc/pulse/client.conf"),
+            container_path: String::from("./etc/pulse/client.conf"),
             contents: String::from(
-                "
-# Connect to the host's server using the mounted UNIX socket
+                "# Connect to the host's server using the mounted UNIX socket
 default-server = unix:/run/user/11571/pulse/native
 
 # Prevent a server running in the container
