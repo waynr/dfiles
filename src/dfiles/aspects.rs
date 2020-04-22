@@ -440,12 +440,12 @@ impl ContainerAspect for Locale {
         vec![DockerfileSnippet {
             order: 88,
             content: format!(
-                r#"RUN echo {locale} > /etc/locale.gen
+                r#"RUN echo '{locale} {codeset}' > /etc/locale.gen
 RUN locale-gen
 RUN echo LANG="{locale}" > /etc/default/locale
-ENV LANG={locale}
-"#,
+ENV LANG={locale}"#,
                 locale = locale,
+                codeset = self.codeset,
             ),
         }]
     }
