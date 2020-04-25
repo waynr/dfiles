@@ -8,6 +8,7 @@ edition = "2018"
 members = [
   "lib/dfilesfiles",
   "app/chrome",
+  "app/discord",
   "app/firefox",
   "app/signal",
   "app/skype",

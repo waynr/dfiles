@@ -260,6 +260,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "discord"
+version = "0.1.0"
+dependencies = [
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dfiles 0.1.0",
+ "dfilesfiles 0.1.0",
+]
+
+[[package]]
 name = "dockworker"
 version = "0.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
