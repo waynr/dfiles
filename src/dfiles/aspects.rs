@@ -62,6 +62,8 @@ impl ContainerAspect for PulseAudio {
             "-v",
             format!("{0}/.pulse:{0}/.pulse", home).as_str(),
             "-v",
+            format!("{0}/.config/pulse:{0}/.config/pulse", home).as_str(),
+            "-v",
             format!("{0}:{0}", pulsedir).as_str(),
         ]
         .into_iter()
