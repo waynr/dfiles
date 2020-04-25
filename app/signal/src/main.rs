@@ -1,17 +1,48 @@
 use std::collections::HashMap;
 use std::env;
 
+use clap::ArgMatches;
+
 use dfiles::aspects;
-use dfiles::containermanager::new_container_manager;
-use dfilesfiles::dfiles_files_container_mgr;
+use dfiles::containermanager::default_debian_container_manager;
+
+struct Signal {}
+
+impl aspects::ContainerAspect for Signal {
+    fn name(&self) -> String {
+        String::from("signal")
+    }
+
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+
+    fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
+        vec![aspects::DockerfileSnippet {
+            order: 90,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgtk-3-0 \
+        libpango1.0-0 \
+        libcanberra-gtk* \
+        hicolor-icon-theme \
+        libgl1-mesa-dri \
+        libgl1-mesa-glx \
+        libv4l-0 \
+        openjdk-11-jre \
+        fonts-symbola \
+    && curl -sSL https://updates.signal.org/desktop/apt/keys.asc | apt-key add - \
+    && echo "deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main" | tee -a /etc/apt/sources.list.d/signal-xenial.list \
+    && apt-get update && apt-get install -y --no-install-recommends \
+        signal-desktop \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /src/*.deb "#,
+            ),
+        }]
+    }
+}
 
 fn main() {
-    let mut context: HashMap<String, String> = HashMap::new();
-    context.insert(
-        "Dockerfile".to_string(),
-        include_str!("signal.dockerfile").to_string(),
-    );
-
     let home = env::var("HOME").expect("HOME must be set");
     let host_path_prefix = format!("{}/.config/signal/", home);
     let container_path = format!("{}/.config/Signal/", home);
@@ -19,15 +50,21 @@ fn main() {
     let host_downloads_path = format!("{}/downloads", home);
     let container_downloads_path = format!("{}/Downloads", home);
 
-    let dfilesfiles_mgr = dfiles_files_container_mgr();
-
-    let mut mgr = new_container_manager(
-        context,
+    let mut mgr = default_debian_container_manager(
+        HashMap::new(),
         vec![String::from("waynr/signal:v0")],
-        vec![Box::new(dfilesfiles_mgr)],
+        Vec::new(),
         vec![
+            Box::new(Signal {}),
             Box::new(aspects::Name("signal".to_string())),
+            Box::new(aspects::Locale {
+                language: "en".to_string(),
+                territory: "US".to_string(),
+                codeset: "UTF-8".to_string(),
+            }),
+            Box::new(aspects::Timezone("America/Chicago".to_string())),
             Box::new(aspects::PulseAudio {}),
+            Box::new(aspects::CurrentUser {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),

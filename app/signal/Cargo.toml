@@ -10,3 +10,4 @@ edition = "2018"
 
 dfiles = { path = "../../" }
 dfilesfiles = { path = "../../lib/dfilesfiles" }
+clap = "2.33"
