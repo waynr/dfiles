@@ -137,7 +137,6 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
- "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -242,15 +241,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dfilesfiles"
-version = "0.1.0"
-dependencies = [
- "dfiles 0.1.0",
- "tar 0.4.26 (registry+https://github.com/rust-lang/crates.io-index)",
- "tempfile 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "dirs"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -266,7 +256,6 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
- "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -340,7 +329,6 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
- "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -1141,7 +1129,6 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
- "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -1150,7 +1137,6 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
- "dfilesfiles 0.1.0",
 ]
 
 [[package]]
@@ -1174,7 +1160,6 @@ version = "0.1.0"
 dependencies = [
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dfiles 0.1.0",
- "dfilesfiles 0.1.0",
 ]
 
 [[package]]
