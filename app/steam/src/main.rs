@@ -1,17 +1,39 @@
 use std::collections::HashMap;
 use std::env;
 
+use clap::ArgMatches;
+
 use dfiles::aspects;
-use dfiles::containermanager::new_container_manager;
-use dfilesfiles::dfiles_files_container_mgr;
+use dfiles::containermanager::default_debian_container_manager;
+
+struct Steam {}
+
+impl aspects::ContainerAspect for Steam {
+    fn name(&self) -> String {
+        String::from("steam")
+    }
+
+    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+        Vec::new()
+    }
+
+    fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
+        vec![aspects::DockerfileSnippet {
+            order: 91,
+            content: format!(
+                r#"RUN dpkg --add-architecture i386
+RUN sed -i -e 's|main|main contrib non-free|' /etc/apt/sources.list
+RUN apt-get update && yes 'I AGREE' | apt-get install -y \
+        steam \
+    && apt-get purge --autoremove \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /src/*.deb "#,
+            ),
+        }]
+    }
+}
 
 fn main() {
-    let mut context: HashMap<String, String> = HashMap::new();
-    context.insert(
-        "Dockerfile".to_string(),
-        include_str!("steam.dockerfile").to_string(),
-    );
-
     let home = env::var("HOME").expect("HOME must be set");
     let host_path_prefix = format!("{}/.steam/", home);
     let container_path = format!("{}/.steam/", home);
@@ -21,14 +43,20 @@ fn main() {
 
     let version = env!("CARGO_PKG_VERSION");
 
-    let dfilesfiles_mgr = dfiles_files_container_mgr();
-
-    let mut mgr = new_container_manager(
-        context,
+    let mut mgr = default_debian_container_manager(
+        HashMap::new(),
         vec![format!("{}:{}", "waynr/steam", version)],
-        vec![Box::new(dfilesfiles_mgr)],
+        Vec::new(),
         vec![
+            Box::new(Steam {}),
             Box::new(aspects::Name("steam".to_string())),
+            Box::new(aspects::CurrentUser {}),
+            Box::new(aspects::Locale {
+                language: "en".to_string(),
+                territory: "US".to_string(),
+                codeset: "UTF-8".to_string(),
+            }),
+            Box::new(aspects::Timezone("America/Chicago".to_string())),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::Alsa {}),
             Box::new(aspects::X11 {}),
@@ -45,7 +73,7 @@ fn main() {
                 container_downloads_path,
             )])),
         ],
-        vec!["/usr/bin/steam"]
+        vec!["/usr/games/steam"]
             .into_iter()
             .map(String::from)
             .collect(),
