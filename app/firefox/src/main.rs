@@ -57,14 +57,14 @@ fn main() {
 
     let version = env!("CARGO_PKG_VERSION");
 
-    let context: HashMap<String, String> = HashMap::new();
     let mut mgr = default_debian_container_manager(
-        context,
+        HashMap::new(),
         vec![format!("{}:{}", "waynr/firefox", version)],
         Vec::new(),
         vec![
             Box::new(Firefox {}),
             Box::new(aspects::Name("firefox".to_string())),
+            Box::new(aspects::CurrentUser {}),
             Box::new(aspects::Locale {
                 language: "en".to_string(),
                 territory: "US".to_string(),
@@ -79,7 +79,6 @@ fn main() {
             Box::new(aspects::Shm {}),
             Box::new(aspects::CPUShares("512".to_string())),
             Box::new(aspects::Memory("3072mb".to_string())),
-            Box::new(aspects::CurrentUser {}),
             Box::new(aspects::Profile {
                 host_path_prefix: host_path_prefix,
                 container_path: container_path,
