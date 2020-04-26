@@ -1,6 +1,7 @@
-use clap::ArgMatches;
 use std::collections::HashMap;
 use std::env;
+
+use clap::ArgMatches;
 
 use dfiles::aspects;
 use dfiles::containermanager::default_debian_container_manager;
@@ -53,6 +54,7 @@ fn main() {
         vec![
             Box::new(Discord {}),
             Box::new(aspects::Name("discord".to_string())),
+            Box::new(aspects::CurrentUser {}),
             Box::new(aspects::Locale {
                 language: "en".to_string(),
                 territory: "US".to_string(),
@@ -68,7 +70,6 @@ fn main() {
             Box::new(aspects::Shm {}),
             Box::new(aspects::CPUShares("512".to_string())),
             Box::new(aspects::Memory("3072mb".to_string())),
-            Box::new(aspects::CurrentUser {}),
             Box::new(aspects::Profile {
                 host_path_prefix: host_path_prefix,
                 container_path: container_path,
