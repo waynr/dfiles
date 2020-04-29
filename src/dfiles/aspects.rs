@@ -328,18 +328,14 @@ impl ContainerAspect for Profile {
 }
 
 pub struct Mount(pub String, pub String);
-
-pub struct Mounts(pub Vec<Mount>);
-impl ContainerAspect for Mounts {
+impl ContainerAspect for Mount {
     fn name(&self) -> String {
-        String::from("Mounts")
+        String::from("Mount")
     }
     fn run_args(&self, _matches: Option<&ArgMatches>) -> Vec<String> {
-        let mounts = &self.0;
-        mounts
+        vec!["-v", format!("{}:{}", self.0, self.1).as_str()]
             .into_iter()
-            .map(|m| vec![String::from("--volume"), format!("{}:{}", m.0, m.1)])
-            .flatten()
+            .map(String::from)
             .collect()
     }
 }
