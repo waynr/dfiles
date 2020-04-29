@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
@@ -20,56 +19,41 @@ struct BuildOutput {
 }
 
 pub struct ContainerManager {
-    context: HashMap<String, String>,
     tags: Vec<String>,
-    dependencies: Vec<Box<ContainerManager>>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 }
 
 pub fn new_container_manager(
-    context: HashMap<String, String>,
     tags: Vec<String>,
-    dependencies: Vec<Box<ContainerManager>>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 ) -> ContainerManager {
     ContainerManager {
-        context: context,
         tags: tags,
-        dependencies: dependencies,
         aspects: aspects,
         args: args,
     }
 }
 
 pub fn default_debian_container_manager(
-    context: HashMap<String, String>,
     tags: Vec<String>,
-    dependencies: Vec<Box<ContainerManager>>,
     mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 ) -> ContainerManager {
     aspects.insert(0, Box::new(Debian {}));
     ContainerManager {
-        context: context,
         tags: tags,
-        dependencies: dependencies,
         aspects: aspects,
         args: args,
     }
 }
 
-pub fn noop_container_manager(
-    context: HashMap<String, String>,
-    tags: Vec<String>,
-) -> ContainerManager {
+pub fn noop_container_manager(tags: Vec<String>) -> ContainerManager {
     ContainerManager {
-        context: context,
         tags: tags,
         args: Vec::new(),
         aspects: Vec::new(),
-        dependencies: Vec::new(),
     }
 }
 
@@ -92,14 +76,7 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn build_deps(&self) {
-        for dep in &self.dependencies {
-            dep.build().unwrap();
-        }
-    }
-
     fn build(&self) -> Result<(), Box<dyn Error>> {
-        self.build_deps();
         let mut tar_file = NamedTempFile::new().unwrap();
         self.generate_archive_impl(&mut tar_file.as_file_mut())?;
 
@@ -150,9 +127,6 @@ impl ContainerManager {
 
         add_file_to_archive(&mut a, "Dockerfile", &dockerfile_contents)?;
 
-        for (name, bs) in &self.context {
-            add_file_to_archive(&mut a, name, bs)?;
-        }
         Ok(())
     }
 

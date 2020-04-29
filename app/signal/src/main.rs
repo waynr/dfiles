@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env;
 
 use clap::ArgMatches;
@@ -51,9 +50,7 @@ fn main() {
     let container_downloads_path = format!("{}/Downloads", home);
 
     let mut mgr = default_debian_container_manager(
-        HashMap::new(),
         vec![String::from("waynr/signal:v0")],
-        Vec::new(),
         vec![
             Box::new(Signal {}),
             Box::new(aspects::Name("signal".to_string())),

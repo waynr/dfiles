@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env;
 
 use clap::ArgMatches;
@@ -108,9 +107,7 @@ fn main() {
     let container_visual_path = format!("{}/visual", home);
 
     let mut mgr = default_debian_container_manager(
-        HashMap::new(),
         vec![String::from("waynr/chrome:v0")],
-        Vec::new(),
         vec![
             Box::new(Chrome {}),
             Box::new(aspects::Name("chrome".to_string())),

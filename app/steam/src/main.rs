@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::env;
 
 use clap::ArgMatches;
@@ -44,9 +43,7 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = default_debian_container_manager(
-        HashMap::new(),
         vec![format!("{}:{}", "waynr/steam", version)],
-        Vec::new(),
         vec![
             Box::new(Steam {}),
             Box::new(aspects::Name("steam".to_string())),
