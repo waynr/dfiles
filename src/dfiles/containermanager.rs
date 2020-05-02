@@ -139,7 +139,7 @@ impl ContainerManager {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut build = SubCommand::with_name("build").about("build app container");
         let generate_archive = SubCommand::with_name("generate-archive")
-            .about("generate archvie used to build container");
+            .about("generate archive used to build container");
 
         let mut app = App::new(name).version("0.0");
 
