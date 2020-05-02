@@ -33,7 +33,7 @@ pub fn build(opts: &BuildOptions) {
 
 pub fn run(args: Vec<String>) {
     let cmdstr: String = args.join(" ");
-    println!("docker {}", cmdstr);
+    println!("docker run {}", cmdstr);
 
     let mut child = Command::new("docker")
         .arg("run")
