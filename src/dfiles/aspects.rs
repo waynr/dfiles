@@ -46,17 +46,7 @@ impl ContainerAspect for PulseAudio {
     fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME").expect("HOME must be set");
         let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("HOME must be set");
-
-        let mut pulsedir = String::new();
-        for entry in fs::read_dir(xdg_runtime_dir.clone()).unwrap() {
-            let entry = entry.unwrap();
-            let filename: String = entry.file_name().into_string().unwrap();
-            let pathstring: String = entry.path().into_os_string().into_string().unwrap();
-            match filename.as_str() {
-                x if x.starts_with("pulse") => pulsedir = pathstring,
-                _ => continue,
-            }
-        }
+        let pulsedir = format!("{}/{}", xdg_runtime_dir, "pulse");
 
         vec![
             "-v",
@@ -182,7 +172,7 @@ impl ContainerAspect for DBus {
     }
     fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         let home = env::var("HOME").expect("HOME must be set");
-        let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("HOME must be set");
+        let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("XDG_RUNTIME_DIR must be set");
 
         vec![
             "-v",
