@@ -131,11 +131,14 @@ fn main() {
                 host_path_prefix: host_path_prefix,
                 container_path: container_path,
             }),
-            Box::new(aspects::Mount(host_visual_path, container_visual_path)),
-            Box::new(aspects::Mount(
-                host_downloads_path,
-                container_downloads_path,
-            )),
+            Box::new(aspects::Mount {
+                host_path: host_visual_path,
+                container_path: container_visual_path,
+            }),
+            Box::new(aspects::Mount {
+                host_path: host_downloads_path,
+                container_path: container_downloads_path,
+            }),
         ],
         vec!["google-chrome", "--user-data-dir=/data"]
             .into_iter()

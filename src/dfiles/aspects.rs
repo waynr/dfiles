@@ -318,16 +318,23 @@ impl ContainerAspect for Profile {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Mount(pub String, pub String);
+pub struct Mount {
+    pub host_path: String,
+    pub container_path: String,
+}
+
 impl ContainerAspect for Mount {
     fn name(&self) -> String {
         String::from("Mount")
     }
     fn run_args(&self, _matches: Option<&ArgMatches>) -> Vec<String> {
-        vec!["-v", format!("{}:{}", self.0, self.1).as_str()]
-            .into_iter()
-            .map(String::from)
-            .collect()
+        vec![
+            "-v",
+            format!("{}:{}", self.host_path, self.container_path).as_str(),
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect()
     }
 }
 
@@ -338,7 +345,10 @@ impl TryFrom<&str> for Mount {
         if vs.len() != 2 {
             return Err("invalid mount string");
         }
-        Ok(Mount(vs[0].to_string(), vs[1].to_string()))
+        Ok(Mount {
+            host_path: vs[0].to_string(),
+            container_path: vs[1].to_string(),
+        })
     }
 }
 
