@@ -111,6 +111,17 @@ profiles. To limit config settings to a particular profile:
 firefox config --profile --mount <hostpath>:<containerpath>
 ```
 
+## Roadmap
+
+* Before open source:
+  * [ ] Aspect-oriented configuration schema for applications with support for
+  profiles.
+  * [ ] Replace buildtime user setup with entrypoint script user setup.
+  * [ ] Improve README
+  * [ ] Implement some kind of automated image build and push.
+* [ ] Remove NetworkHost default behavior.
+* [ ] `userns-remap` alternative to entrypoint user script.
+
 ## Similar Projects
 
 ### jessfraz/dockerfiles
