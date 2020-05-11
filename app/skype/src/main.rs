@@ -115,6 +115,7 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = default_debian_container_manager(
+        "skype".to_string(),
         vec![format!("{}:{}", "waynr/skype", version)],
         vec![
             Box::new(Skype {}),
@@ -150,5 +151,5 @@ fn main() {
             .collect(),
     );
 
-    mgr.execute("skype");
+    mgr.execute();
 }

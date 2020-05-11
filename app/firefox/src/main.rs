@@ -57,6 +57,7 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = default_debian_container_manager(
+        "firefox".to_string(),
         vec![format!("{}:{}", "waynr/firefox", version)],
         vec![
             Box::new(Firefox {}),
@@ -100,5 +101,5 @@ fn main() {
         .collect(),
     );
 
-    mgr.execute("firefox");
+    mgr.execute();
 }

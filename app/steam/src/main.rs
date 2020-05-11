@@ -43,6 +43,7 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = default_debian_container_manager(
+        "stream".to_string(),
         vec![format!("{}:{}", "waynr/steam", version)],
         vec![
             Box::new(Steam {}),
@@ -76,5 +77,5 @@ fn main() {
             .collect(),
     );
 
-    mgr.execute("steam");
+    mgr.execute();
 }

@@ -23,17 +23,20 @@ struct BuildOutput {
 }
 
 pub struct ContainerManager {
+    name: String,
     tags: Vec<String>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 }
 
 pub fn new_container_manager(
+    name: String,
     tags: Vec<String>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 ) -> ContainerManager {
     ContainerManager {
+        name: name,
         tags: tags,
         aspects: aspects,
         args: args,
@@ -41,12 +44,14 @@ pub fn new_container_manager(
 }
 
 pub fn default_debian_container_manager(
+    name: String,
     tags: Vec<String>,
     mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 ) -> ContainerManager {
     aspects.insert(0, Box::new(Debian {}));
     ContainerManager {
+        name: name,
         tags: tags,
         aspects: aspects,
         args: args,
@@ -55,6 +60,7 @@ pub fn default_debian_container_manager(
 
 pub fn noop_container_manager(tags: Vec<String>) -> ContainerManager {
     ContainerManager {
+        name: String::new(),
         tags: tags,
         args: Vec::new(),
         aspects: Vec::new(),
@@ -150,9 +156,12 @@ impl ContainerManager {
     /// ```
     /// $ firefox config --mount <hostpath>:<containerpath>
     /// ```
-    pub fn config(&self, name: &str, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    pub fn config(&self, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
         let home = env::var("HOME").expect("HOME var must be set");
-        let mut config_dir = Path::new(&home).join(".config").join("dfiles").join(name);
+        let mut config_dir = Path::new(&home)
+            .join(".config")
+            .join("dfiles")
+            .join(&self.name);
 
         if let Some(c) = matches.value_of("profile") {
             config_dir = config_dir.join("profiles").join(c);
@@ -175,14 +184,14 @@ impl ContainerManager {
         Ok(())
     }
 
-    pub fn execute(&mut self, name: &str) {
+    pub fn execute(&mut self) {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut build = SubCommand::with_name("build").about("build app container");
         let mut config = SubCommand::with_name("config").about("configure app container settings");
         let generate_archive = SubCommand::with_name("generate-archive")
             .about("generate archive used to build container");
 
-        let mut app = App::new(name).version("0.0");
+        let mut app = App::new(&self.name).version("0.0");
 
         let config_args: Vec<Arg> = vec![Arg::with_name("mount")
             .short("m")
@@ -219,7 +228,7 @@ impl ContainerManager {
         match matches.subcommand() {
             ("run", Some(subm)) => self.run(&subm).unwrap(),
             ("build", _) => self.build().unwrap(),
-            ("config", Some(subm)) => self.config(name, &subm).unwrap(),
+            ("config", Some(subm)) => self.config(&subm).unwrap(),
             ("generate-archive", _) => self.generate_archive().unwrap(),
             (_, _) => println!("{}", matches.usage()),
         }

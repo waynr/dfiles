@@ -107,6 +107,7 @@ fn main() {
     let container_visual_path = format!("{}/visual", home);
 
     let mut mgr = default_debian_container_manager(
+        "chrome".to_string(),
         vec![String::from("waynr/chrome:v0")],
         vec![
             Box::new(Chrome {}),
@@ -146,5 +147,5 @@ fn main() {
             .collect(),
     );
 
-    mgr.execute("chrome");
+    mgr.execute();
 }

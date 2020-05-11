@@ -46,6 +46,7 @@ fn main() {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = default_debian_container_manager(
+        "discord".to_string(),
         vec![format!("{}:{}", "waynr/discord", version)],
         vec![
             Box::new(Discord {}),
@@ -82,5 +83,5 @@ fn main() {
         vec!["discord"].into_iter().map(String::from).collect(),
     );
 
-    mgr.execute("discord");
+    mgr.execute();
 }

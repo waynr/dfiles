@@ -50,6 +50,7 @@ fn main() {
     let container_downloads_path = format!("{}/Downloads", home);
 
     let mut mgr = default_debian_container_manager(
+        "signal".to_string(),
         vec![String::from("waynr/signal:v0")],
         vec![
             Box::new(Signal {}),
@@ -85,5 +86,5 @@ fn main() {
             .collect(),
     );
 
-    mgr.execute("signal");
+    mgr.execute();
 }
