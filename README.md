@@ -25,6 +25,10 @@ distributions, but between different computers and across reinstalls; thanks to
 `Cargo` (rust's package manager), installing `dfiles`-based apps is trivially
 easy on new computers and (on the roadmap) will eventually allow you to choose
 the version of the app installed.
+* Some people don't like installing proprietary libraries and applications onto
+their main operating system but some use case (Steam, Skype, Zoom, etc) require
+it; containerization lets them limit those applications' access to the rest of
+the system.
 
 However, there can be some drawbacks:
 
