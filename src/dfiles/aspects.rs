@@ -1,8 +1,10 @@
+use std::convert::TryFrom;
 use std::fmt;
 use std::path::Path;
 use std::{env, fs};
 
 use clap::{Arg, ArgMatches};
+use serde::{Deserialize, Serialize};
 use users;
 
 pub struct DockerfileSnippet {
@@ -18,7 +20,7 @@ pub struct ContainerFile {
 pub trait ContainerAspect {
     fn name(&self) -> String;
     fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String>;
-    fn cli_run_args(&self) -> Vec<Arg> {
+    fn config_args(&self) -> Vec<Arg> {
         Vec::new()
     }
     fn cli_build_args(&self) -> Vec<Arg> {
@@ -305,18 +307,17 @@ impl ContainerAspect for Profile {
         .collect()
     }
 
-    fn cli_run_args(&self) -> Vec<Arg> {
+    fn config_args(&self) -> Vec<Arg> {
         vec![Arg::with_name("profile")
             .short("p")
             .long("profile")
             .help("specify the profile to use")
             .takes_value(true)
             .default_value("default")]
-        .into_iter()
-        .collect()
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Mount(pub String, pub String);
 impl ContainerAspect for Mount {
     fn name(&self) -> String {
@@ -327,6 +328,17 @@ impl ContainerAspect for Mount {
             .into_iter()
             .map(String::from)
             .collect()
+    }
+}
+
+impl TryFrom<&str> for Mount {
+    type Error = &'static str;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let vs: Vec<&str> = value.split(':').collect();
+        if vs.len() != 2 {
+            return Err("invalid mount string");
+        }
+        Ok(Mount(vs[0].to_string(), vs[1].to_string()))
     }
 }
 
@@ -349,7 +361,7 @@ impl ContainerAspect for Name {
             .collect()
     }
 
-    fn cli_run_args(&self) -> Vec<Arg> {
+    fn config_args(&self) -> Vec<Arg> {
         vec![Arg::with_name("container_name")
             .short("n")
             .long("name")

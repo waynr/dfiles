@@ -1,9 +1,13 @@
 use std::collections::BTreeMap;
+use std::convert::TryFrom;
+use std::env;
 use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
+use std::path::Path;
 
-use clap::{App, ArgMatches, SubCommand};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
 use serde::Deserialize;
 use serde_json::from_str;
@@ -135,26 +139,79 @@ impl ContainerManager {
         self.generate_archive_impl(&mut tar_file)
     }
 
+    /// Takes configuration options for the dfiles binary and saves them to be loaded at build or
+    /// run time.
+    ///
+    /// dfiles strives to provide a configurable framework for building and running GUI containers.
+    /// to achieve this configurability, we allow dynamic Aspects to be loaded from configuration
+    /// files. Those configuration files can be hand-written but we also provide a `config`
+    /// subcommand.
+    ///
+    /// ```
+    /// $ firefox config --mount <hostpath>:<containerpath>
+    /// ```
+    pub fn config(&self, name: &str, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+        let home = env::var("HOME").expect("HOME var must be set");
+        let mut config_dir = Path::new(&home).join(".config").join("dfiles").join(name);
+
+        if let Some(c) = matches.value_of("profile") {
+            config_dir = config_dir.join("profiles").join(c);
+        }
+
+        fs::create_dir_all(&config_dir)?;
+
+        if let Some(vs) = matches.values_of("mount") {
+            let mut mounts: Vec<aspects::Mount> = Vec::new();
+            for v in vs {
+                mounts.push(aspects::Mount::try_from(v)?);
+            }
+
+            let s = serde_yaml::to_string(&mounts)?;
+            let path = config_dir.join("mounts.yaml");
+            let mut mounts_file = fs::File::create(path)?;
+            mounts_file.write_all(&s.into_bytes())?;
+        }
+
+        Ok(())
+    }
+
     pub fn execute(&mut self, name: &str) {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut build = SubCommand::with_name("build").about("build app container");
+        let mut config = SubCommand::with_name("config").about("configure app container settings");
         let generate_archive = SubCommand::with_name("generate-archive")
             .about("generate archive used to build container");
 
         let mut app = App::new(name).version("0.0");
 
+        let config_args: Vec<Arg> = vec![Arg::with_name("mount")
+            .short("m")
+            .long("mount")
+            .multiple(true)
+            .takes_value(true)
+            .help("specify a local path to be mapped into the container filesystem at runtime")];
+
+        for arg in &config_args {
+            run = run.arg(arg);
+            config = config.arg(arg);
+        }
+
         for aspect in &self.aspects {
-            for arg in aspect.cli_run_args() {
+            for arg in aspect.config_args() {
                 run = run.arg(arg);
             }
             for arg in aspect.cli_build_args() {
                 build = build.arg(arg);
+            }
+            for arg in aspect.config_args() {
+                config = config.arg(arg);
             }
         }
 
         app = app
             .subcommand(run)
             .subcommand(build)
+            .subcommand(config)
             .subcommand(generate_archive);
 
         let matches = app.get_matches();
@@ -162,6 +219,7 @@ impl ContainerManager {
         match matches.subcommand() {
             ("run", Some(subm)) => self.run(&subm).unwrap(),
             ("build", _) => self.build().unwrap(),
+            ("config", Some(subm)) => self.config(name, &subm).unwrap(),
             ("generate-archive", _) => self.generate_archive().unwrap(),
             (_, _) => println!("{}", matches.usage()),
         }
