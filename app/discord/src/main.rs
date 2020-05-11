@@ -37,12 +37,6 @@ fn main() {
     let host_path_prefix = format!("{}/.config/discord/", home);
     let container_path = format!("{}/.config/discord/", home);
 
-    let host_downloads_path = format!("{}/downloads", home);
-    let container_downloads_path = format!("{}/Downloads", home);
-
-    let host_visual_path = format!("{}/visual", home);
-    let container_visual_path = format!("{}/visual", home);
-
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = default_debian_container_manager(
@@ -70,14 +64,6 @@ fn main() {
             Box::new(aspects::Profile {
                 host_path_prefix: host_path_prefix,
                 container_path: container_path,
-            }),
-            Box::new(aspects::Mount {
-                host_path: host_visual_path,
-                container_path: container_visual_path,
-            }),
-            Box::new(aspects::Mount {
-                host_path: host_downloads_path,
-                container_path: container_downloads_path,
             }),
         ],
         vec!["discord"].into_iter().map(String::from).collect(),

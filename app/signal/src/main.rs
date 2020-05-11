@@ -46,9 +46,6 @@ fn main() {
     let host_path_prefix = format!("{}/.config/signal/", home);
     let container_path = format!("{}/.config/Signal/", home);
 
-    let host_downloads_path = format!("{}/downloads", home);
-    let container_downloads_path = format!("{}/Downloads", home);
-
     let mut mgr = default_debian_container_manager(
         "signal".to_string(),
         vec![String::from("waynr/signal:v0")],
@@ -74,10 +71,6 @@ fn main() {
             Box::new(aspects::Profile {
                 host_path_prefix: host_path_prefix,
                 container_path: container_path,
-            }),
-            Box::new(aspects::Mount {
-                host_path: host_downloads_path,
-                container_path: container_downloads_path,
             }),
         ],
         vec!["/opt/Signal/signal-desktop"]
