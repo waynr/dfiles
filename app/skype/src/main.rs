@@ -123,7 +123,6 @@ fn main() {
                 territory: "US".to_string(),
                 codeset: "UTF-8".to_string(),
             }),
-            Box::new(aspects::Timezone("America/Chicago".to_string())),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),

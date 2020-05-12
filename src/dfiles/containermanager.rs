@@ -171,6 +171,10 @@ impl ContainerManager {
             cfg.mounts = Some(mounts);
         }
 
+        if let Some(tz) = matches.value_of("timezone") {
+            cfg.timezone = Some(aspects::Timezone::try_from(tz)?);
+        }
+
         let mut profile: Option<&str> = None;
         if matches.occurrences_of("profile") > 0 {
             profile = matches.value_of("profile");
@@ -201,12 +205,19 @@ impl ContainerManager {
 
         let mut app = App::new(&self.name).version("0.0");
 
-        let config_args: Vec<Arg> = vec![Arg::with_name("mount")
-            .short("m")
-            .long("mount")
-            .multiple(true)
-            .takes_value(true)
-            .help("specify a local path to be mapped into the container filesystem at runtime")];
+        let config_args: Vec<Arg> = vec![
+            Arg::with_name("mount")
+                .short("m")
+                .long("mount")
+                .multiple(true)
+                .takes_value(true)
+                .help("specify a local path to be mapped into the container filesystem at runtime"),
+            Arg::with_name("timezone")
+                .short("t")
+                .long("timezone")
+                .takes_value(true)
+                .help("specify the timezone to be built into the container image"),
+        ];
 
         for arg in &config_args {
             run = run.arg(arg);

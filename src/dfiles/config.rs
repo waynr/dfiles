@@ -11,11 +11,15 @@ use super::aspects;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub mounts: Option<Vec<aspects::Mount>>,
+    pub timezone: Option<aspects::Timezone>,
 }
 
 impl Config {
     pub fn empty() -> Config {
-        Config { mounts: None }
+        Config {
+            mounts: None,
+            timezone: None,
+        }
     }
 
     pub fn save(
@@ -23,13 +27,16 @@ impl Config {
         application: Option<&str>,
         profile: Option<&str>,
     ) -> Result<(), Box<dyn Error>> {
+        let existing_config = Config::load_layer(application, profile)?;
+        let merged = existing_config.merge(self);
+
         let config_dir = get_config_dir(application, profile);
         fs::create_dir_all(&config_dir)?;
 
         let path = config_dir.join("config.yaml");
         let mut config_file = fs::File::create(path)?;
 
-        let s = serde_yaml::to_string(&self)?;
+        let s = serde_yaml::to_string(&merged)?;
         config_file.write_all(&s.into_bytes())?;
 
         Ok(())
@@ -72,6 +79,10 @@ impl Config {
             cfg.mounts = Some(v.clone());
         }
 
+        if let Some(v) = &other.timezone {
+            cfg.timezone = Some(v.clone());
+        }
+
         cfg
     }
 
@@ -82,6 +93,10 @@ impl Config {
             for mount in mounts {
                 aspects.push(Box::new(mount.clone()));
             }
+        }
+
+        if let Some(timezone) = &self.timezone {
+            aspects.push(Box::new(timezone.clone()));
         }
 
         aspects

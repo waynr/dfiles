@@ -461,6 +461,7 @@ ENV LANG={locale}"#,
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Timezone(pub String);
 
 impl ContainerAspect for Timezone {
@@ -481,5 +482,13 @@ RUN echo {tz} > /etc/timezone
                 tz = self.0,
             ),
         }]
+    }
+}
+
+impl TryFrom<&str> for Timezone {
+    type Error = std::io::Error;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let _ = tzdata::Timezone::new(value)?;
+        Ok(Timezone(value.to_string()))
     }
 }
