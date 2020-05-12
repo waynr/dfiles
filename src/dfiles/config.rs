@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use super::aspects;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub mounts: Option<Vec<aspects::Mount>>,
 }
@@ -66,14 +66,10 @@ impl Config {
 
     /// destructively merge values from other onto a copy of self, producing a new Config
     fn merge(&self, other: &Config) -> Config {
-        let mut cfg = Config::empty();
+        let mut cfg = (*self).clone();
 
-        if let Some(v) = self.mounts.clone() {
-            cfg.mounts = Some(v);
-        }
-
-        if let Some(v) = other.mounts.clone() {
-            cfg.mounts = Some(v);
+        if let Some(v) = &other.mounts {
+            cfg.mounts = Some(v.clone());
         }
 
         cfg
