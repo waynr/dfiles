@@ -317,7 +317,7 @@ impl ContainerAspect for Profile {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mount {
     pub host_path: String,
     pub container_path: String,

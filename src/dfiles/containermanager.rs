@@ -1,10 +1,8 @@
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
-use std::env;
 use std::error::Error;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::path::Path;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
@@ -14,6 +12,7 @@ use tar::{Builder, Header};
 use tempfile::NamedTempFile;
 
 use super::aspects;
+use super::config;
 use super::docker;
 
 #[derive(Deserialize, Debug)]
@@ -162,59 +161,35 @@ impl ContainerManager {
     /// $ firefox config --mount <hostpath>:<containerpath>
     /// ```
     fn config(&self, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
-        let home = env::var("HOME").expect("HOME var must be set");
-        let mut config_dir = Path::new(&home)
-            .join(".config")
-            .join("dfiles")
-            .join(&self.name);
-
-        if let Some(c) = matches.value_of("profile") {
-            config_dir = config_dir.join("profiles").join(c);
-        }
-
-        fs::create_dir_all(&config_dir)?;
+        let mut cfg = config::Config::empty();
 
         if let Some(vs) = matches.values_of("mount") {
             let mut mounts: Vec<aspects::Mount> = Vec::new();
             for v in vs {
                 mounts.push(aspects::Mount::try_from(v)?);
             }
-
-            let s = serde_yaml::to_string(&mounts)?;
-            let path = config_dir.join("mounts.yaml");
-            let mut mounts_file = fs::File::create(path)?;
-            mounts_file.write_all(&s.into_bytes())?;
+            cfg.mounts = Some(mounts);
         }
 
-        Ok(())
+        let mut profile: Option<&str> = None;
+        if matches.occurrences_of("profile") > 0 {
+            profile = matches.value_of("profile");
+        }
+
+        cfg.save(Some(&self.name), profile)
     }
 
     fn load_config(
         &self,
         matches: &ArgMatches,
     ) -> Result<Vec<Box<dyn aspects::ContainerAspect>>, Box<dyn Error>> {
-        let home = env::var("HOME").expect("HOME var must be set");
-        let mut config_dir = Path::new(&home)
-            .join(".config")
-            .join("dfiles")
-            .join(&self.name);
-
-        if let Some(c) = matches.value_of("profile") {
-            config_dir = config_dir.join("profiles").join(c);
+        let mut profile: Option<&str> = None;
+        if matches.occurrences_of("profile") > 0 {
+            profile = matches.value_of("profile");
         }
-        let mut aspects: Vec<Box<dyn aspects::ContainerAspect>> = Vec::new();
+        let cfg = config::Config::load(&self.name, profile)?;
 
-        let yaml_file = config_dir.join("mounts.yaml");
-
-        if yaml_file.exists() {
-            let yaml = fs::read_to_string(yaml_file)?;
-            let asps: Vec<aspects::Mount> = serde_yaml::from_str(&yaml)?;
-            for aspect in asps {
-                aspects.push(Box::new(aspect));
-            }
-        }
-
-        Ok(aspects)
+        Ok(cfg.get_aspects())
     }
 
     pub fn execute(&mut self) {
