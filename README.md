@@ -114,11 +114,20 @@ firefox config --profile --mount <hostpath>:<containerpath>
 ## Roadmap
 
 * Before open source:
-  * [ ] Aspect-oriented configuration schema for applications with support for
+  * [x] Aspect-oriented configuration schema for applications with support for
   profiles.
+  * Implement configurable aspects:
+    * [ ] CPU shares
+    * [ ] Memory
+    * [ ] Network type (host vs bridge)
   * [ ] Replace buildtime user setup with entrypoint script user setup.
-  * [ ] Improve README
+  * [ ] Improve README.
   * [ ] Implement some kind of automated image build and push.
+  * [ ] Figure out some kind of data directory approach rather than for
+  example.
+  * [ ] Figure out container versioning schema of some kind.
+  using $HOME/.mozilla/firefox -- dfiles apps should not mess with application
+  data managed by vanilla installs of the same app
 * [ ] Remove NetworkHost default behavior.
 * [ ] `userns-remap` alternative to entrypoint user script.
 
