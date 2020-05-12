@@ -76,7 +76,15 @@ impl Config {
     }
 
     pub fn get_aspects(&self) -> Vec<Box<dyn aspects::ContainerAspect>> {
-        Vec::new()
+        let mut aspects: Vec<Box<dyn aspects::ContainerAspect>> = Vec::new();
+
+        if let Some(mounts) = &self.mounts {
+            for mount in mounts {
+                aspects.push(Box::new(mount.clone()));
+            }
+        }
+
+        aspects
     }
 }
 
