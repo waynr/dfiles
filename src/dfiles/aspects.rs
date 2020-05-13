@@ -254,6 +254,7 @@ impl ContainerAspect for Shm {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CPUShares(pub String);
 impl ContainerAspect for CPUShares {
     fn name(&self) -> String {
@@ -267,6 +268,14 @@ impl ContainerAspect for CPUShares {
     }
 }
 
+impl TryFrom<&str> for CPUShares {
+    type Error = &'static str;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(CPUShares(value.to_string()))
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Memory(pub String);
 impl ContainerAspect for Memory {
     fn name(&self) -> String {
@@ -277,6 +286,13 @@ impl ContainerAspect for Memory {
             .into_iter()
             .map(String::from)
             .collect()
+    }
+}
+
+impl TryFrom<&str> for Memory {
+    type Error = &'static str;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(Memory(value.to_string()))
     }
 }
 

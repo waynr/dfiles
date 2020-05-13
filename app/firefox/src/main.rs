@@ -68,8 +68,6 @@ fn main() {
             Box::new(aspects::DBus {}),
             Box::new(aspects::NetHost {}),
             Box::new(aspects::Shm {}),
-            Box::new(aspects::CPUShares("512".to_string())),
-            Box::new(aspects::Memory("3072mb".to_string())),
             Box::new(aspects::Profile {
                 host_path_prefix: host_path_prefix,
                 container_path: container_path,

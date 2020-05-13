@@ -175,6 +175,14 @@ impl ContainerManager {
             cfg.timezone = Some(aspects::Timezone::try_from(tz)?);
         }
 
+        if let Some(tz) = matches.value_of("memory") {
+            cfg.memory = Some(aspects::Memory::try_from(tz)?);
+        }
+
+        if let Some(tz) = matches.value_of("cpu-shares") {
+            cfg.cpu_shares = Some(aspects::CPUShares::try_from(tz)?);
+        }
+
         let mut profile: Option<&str> = None;
         if matches.occurrences_of("profile") > 0 {
             profile = matches.value_of("profile");

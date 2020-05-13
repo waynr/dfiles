@@ -12,6 +12,8 @@ use super::aspects;
 pub struct Config {
     pub mounts: Option<Vec<aspects::Mount>>,
     pub timezone: Option<aspects::Timezone>,
+    pub memory: Option<aspects::Memory>,
+    pub cpu_shares: Option<aspects::CPUShares>,
 }
 
 impl Config {
@@ -19,6 +21,8 @@ impl Config {
         Config {
             mounts: None,
             timezone: None,
+            memory: None,
+            cpu_shares: None,
         }
     }
 
@@ -83,6 +87,14 @@ impl Config {
             cfg.timezone = Some(v.clone());
         }
 
+        if let Some(v) = &other.memory {
+            cfg.memory = Some(v.clone());
+        }
+
+        if let Some(v) = &other.cpu_shares {
+            cfg.cpu_shares = Some(v.clone());
+        }
+
         cfg
     }
 
@@ -97,6 +109,14 @@ impl Config {
 
         if let Some(timezone) = &self.timezone {
             aspects.push(Box::new(timezone.clone()));
+        }
+
+        if let Some(memory) = &self.memory {
+            aspects.push(Box::new(memory.clone()));
+        }
+
+        if let Some(cpu_shares) = &self.cpu_shares {
+            aspects.push(Box::new(cpu_shares.clone()));
         }
 
         aspects
