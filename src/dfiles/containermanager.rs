@@ -157,7 +157,7 @@ impl ContainerManager {
     /// files. Those configuration files can be hand-written but we also provide a `config`
     /// subcommand.
     ///
-    /// ```
+    /// ```bash
     /// $ firefox config --mount <hostpath>:<containerpath>
     /// ```
     fn config(&self, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
