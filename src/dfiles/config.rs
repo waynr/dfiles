@@ -141,3 +141,75 @@ fn merge<T: Clone>(
         _ => None,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merge_returns_some() {
+        let left: Vec<i32> = vec![1, 2, 3, 4];
+        let right: Vec<i32> = vec![5, 6, 7];
+        let empty: Option<Vec<i32>> = Some(Vec::new());
+
+        assert_eq!(
+            merge(&Some(left.clone()), &Some(right.clone()), true),
+            Some(vec![5, 6, 7])
+        );
+        assert_eq!(
+            merge(&Some(left.clone()), &Some(right.clone()), false),
+            Some(vec![1, 2, 3, 4, 5, 6, 7])
+        );
+
+        assert_eq!(
+            merge(&Some(left.clone()), &None, false),
+            Some(vec![1, 2, 3, 4])
+        );
+        assert_eq!(
+            merge(&Some(left.clone()), &None, true),
+            Some(vec![1, 2, 3, 4])
+        );
+
+        assert_eq!(
+            merge(&None, &Some(right.clone()), false),
+            Some(vec![5, 6, 7])
+        );
+        assert_eq!(
+            merge(&None, &Some(right.clone()), true),
+            Some(vec![5, 6, 7])
+        );
+
+        assert_eq!(
+            merge(&Some(left.clone()), &empty.clone(), false),
+            Some(vec![1, 2, 3, 4])
+        );
+        assert_eq!(merge(&Some(left.clone()), &empty.clone(), true), None);
+
+        assert_eq!(
+            merge(&empty.clone(), &Some(right.clone()), false),
+            Some(vec![5, 6, 7])
+        );
+        assert_eq!(
+            merge(&empty.clone(), &Some(right.clone()), true),
+            Some(vec![5, 6, 7])
+        );
+    }
+
+    #[test]
+    fn test_merge_returns_none() {
+        let none: Option<Vec<i32>> = None;
+        let empty: Option<Vec<i32>> = Some(Vec::new());
+
+        assert_eq!(merge(&none.clone(), &none.clone(), true), None);
+        assert_eq!(merge(&none.clone(), &none.clone(), false), None);
+
+        assert_eq!(merge(&none.clone(), &empty.clone(), true), None);
+        assert_eq!(merge(&none.clone(), &empty.clone(), false), None);
+
+        assert_eq!(merge(&empty.clone(), &empty.clone(), true), None);
+        assert_eq!(merge(&empty.clone(), &empty.clone(), false), None);
+
+        assert_eq!(merge(&empty.clone(), &none.clone(), true), None);
+        assert_eq!(merge(&empty.clone(), &none.clone(), false), None);
+    }
+}
