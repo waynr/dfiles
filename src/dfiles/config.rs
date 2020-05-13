@@ -28,7 +28,7 @@ impl Config {
         profile: Option<&str>,
     ) -> Result<(), Box<dyn Error>> {
         let existing_config = Config::load_layer(application, profile)?;
-        let merged = existing_config.merge(self);
+        let merged = existing_config.merge(self, true);
 
         let config_dir = get_config_dir(application, profile);
         fs::create_dir_all(&config_dir)?;
@@ -68,16 +68,30 @@ impl Config {
         let app_config = Config::load_layer(Some(application), None)?;
         // load application profile config if profile is specified and it exists
         let profile_config = Config::load_layer(Some(application), profile)?;
-        Ok(global_config.merge(&app_config).merge(&profile_config))
+        Ok(global_config
+            .merge(&app_config, false)
+            .merge(&profile_config, false))
     }
 
     /// destructively merge values from other onto a copy of self, producing a new Config
-    fn merge(&self, other: &Config) -> Config {
+    fn merge(&self, other: &Config, overwrite: bool) -> Config {
         let mut cfg = (*self).clone();
 
-        if let Some(v) = &other.mounts {
-            cfg.mounts = Some(v.clone());
+        let mut mounts = Vec::new();
+        if let Some(v) = &self.mounts {
+            mounts = v.clone();
         }
+
+        if overwrite {
+            if let Some(v) = &other.mounts {
+                mounts = v.clone();
+            }
+        } else {
+            if let Some(v) = &other.mounts {
+                mounts.append(&mut v.clone());
+            }
+        }
+        cfg.mounts = Some(mounts);
 
         if let Some(v) = &other.timezone {
             cfg.timezone = Some(v.clone());
