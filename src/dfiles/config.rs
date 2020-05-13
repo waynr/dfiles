@@ -77,21 +77,7 @@ impl Config {
     fn merge(&self, other: &Config, overwrite: bool) -> Config {
         let mut cfg = (*self).clone();
 
-        let mut mounts = Vec::new();
-        if let Some(v) = &self.mounts {
-            mounts = v.clone();
-        }
-
-        if overwrite {
-            if let Some(v) = &other.mounts {
-                mounts = v.clone();
-            }
-        } else {
-            if let Some(v) = &other.mounts {
-                mounts.append(&mut v.clone());
-            }
-        }
-        cfg.mounts = Some(mounts);
+        cfg.mounts = merge(&self.mounts, &other.mounts, overwrite);
 
         if let Some(v) = &other.timezone {
             cfg.timezone = Some(v.clone());
@@ -129,4 +115,29 @@ fn get_config_dir(application: Option<&str>, profile: Option<&str>) -> PathBuf {
         config_dir = config_dir.join("profiles").join(s)
     }
     return config_dir;
+}
+
+fn merge<T: Clone>(
+    left: &Option<Vec<T>>,
+    right: &Option<Vec<T>>,
+    overwrite: bool,
+) -> Option<Vec<T>> {
+    let mut new = Vec::new();
+
+    if let Some(v) = &left {
+        new = v.clone();
+    }
+
+    if let Some(v) = &right {
+        if overwrite {
+            new = v.clone();
+        } else {
+            new.append(&mut v.clone());
+        }
+    }
+
+    match new.len() {
+        x if x > 0 => Some(new),
+        _ => None,
+    }
 }
