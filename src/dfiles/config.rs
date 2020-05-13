@@ -143,11 +143,11 @@ fn merge<T: Clone>(
 }
 
 #[cfg(test)]
-mod tests {
+mod merge_should {
     use super::*;
 
     #[test]
-    fn test_merge_returns_some() {
+    fn return_some() {
         let left: Vec<i32> = vec![1, 2, 3, 4];
         let right: Vec<i32> = vec![5, 6, 7];
         let empty: Option<Vec<i32>> = Some(Vec::new());
@@ -196,7 +196,7 @@ mod tests {
     }
 
     #[test]
-    fn test_merge_returns_none() {
+    fn return_none() {
         let none: Option<Vec<i32>> = None;
         let empty: Option<Vec<i32>> = Some(Vec::new());
 
