@@ -66,7 +66,9 @@ fn main() {
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),
-            Box::new(aspects::NetHost {}),
+            Box::new(aspects::Network {
+                mode: "host".to_string(),
+            }),
             Box::new(aspects::Shm {}),
             Box::new(aspects::Profile {
                 host_path_prefix: host_path_prefix,

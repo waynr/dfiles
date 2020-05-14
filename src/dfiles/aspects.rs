@@ -205,13 +205,15 @@ impl ContainerAspect for DBus {
     }
 }
 
-pub struct NetHost {}
-impl ContainerAspect for NetHost {
+pub struct Network {
+    pub mode: String,
+}
+impl ContainerAspect for Network {
     fn name(&self) -> String {
-        String::from("NetHost")
+        String::from("Network")
     }
     fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["--net", "host"]
+        vec!["--net", &self.mode]
             .into_iter()
             .map(String::from)
             .collect()
