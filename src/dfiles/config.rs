@@ -14,6 +14,7 @@ pub struct Config {
     pub timezone: Option<aspects::Timezone>,
     pub memory: Option<aspects::Memory>,
     pub cpu_shares: Option<aspects::CPUShares>,
+    pub network: Option<aspects::Network>,
 }
 
 impl Config {
@@ -23,6 +24,7 @@ impl Config {
             timezone: None,
             memory: None,
             cpu_shares: None,
+            network: None,
         }
     }
 
@@ -95,6 +97,10 @@ impl Config {
             cfg.cpu_shares = Some(v.clone());
         }
 
+        if let Some(v) = &other.network {
+            cfg.network = Some(v.clone());
+        }
+
         cfg
     }
 
@@ -117,6 +123,10 @@ impl Config {
 
         if let Some(cpu_shares) = &self.cpu_shares {
             aspects.push(Box::new(cpu_shares.clone()));
+        }
+
+        if let Some(network) = &self.network {
+            aspects.push(Box::new(network.clone()));
         }
 
         aspects

@@ -205,9 +205,11 @@ impl ContainerAspect for DBus {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Network {
     pub mode: String,
 }
+
 impl ContainerAspect for Network {
     fn name(&self) -> String {
         String::from("Network")
@@ -217,6 +219,15 @@ impl ContainerAspect for Network {
             .into_iter()
             .map(String::from)
             .collect()
+    }
+}
+
+impl TryFrom<&str> for Network {
+    type Error = std::io::Error;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(Network {
+            mode: value.to_string(),
+        })
     }
 }
 
