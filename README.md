@@ -117,8 +117,8 @@ firefox config --profile --mount <hostpath>:<containerpath>
   * [x] Aspect-oriented configuration schema for applications with support for
   profiles.
   * Implement configurable aspects:
-    * [ ] CPU shares
-    * [ ] Memory
+    * [x] CPU shares
+    * [x] Memory
     * [ ] Network type (host vs bridge)
   * [ ] Replace buildtime user setup with entrypoint script user setup.
   * [ ] Improve README.
