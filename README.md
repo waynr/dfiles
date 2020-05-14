@@ -119,17 +119,32 @@ firefox config --profile --mount <hostpath>:<containerpath>
   * Implement configurable aspects:
     * [x] CPU shares
     * [x] Memory
-    * [ ] Network type (host vs bridge)
+    * [x] Network mode
+    * [ ] Locale
+    * [ ] CurrentUser
+      * should take configurable mode to facilitate choice of userns vs
+      entrypoint
   * [ ] Replace buildtime user setup with entrypoint script user setup.
   * [ ] Improve README.
   * [ ] Implement some kind of automated image build and push.
-  * [ ] Figure out some kind of data directory approach rather than for
-  example.
+  * [ ] Figure out some kind of data directory approach that isolates dfiles
+  application data directories to some kind of dfiles-specific XDG data
+  directory. For example, don't let firefox use $HOME/.mozilla/firefox --
+  dfiles apps should not mess with application data managed by vanilla installs
+  of the same app
   * [ ] Figure out container versioning schema of some kind.
-  using $HOME/.mozilla/firefox -- dfiles apps should not mess with application
-  data managed by vanilla installs of the same app
-* [ ] Remove NetworkHost default behavior.
+  * [ ] Prune current apps of unnecessary aspects (most probably don't need
+  SysAdmin or Shm)
+* [x] Remove NetworkHost default behavior.
 * [ ] `userns-remap` alternative to entrypoint user script.
+* [ ] Consider framework for lightweight runtime container setup:
+  * generate and inject entrypoint script at runtime
+    * simple, easy to understand
+    * but could burn through seconds every program startup
+  * build user-specific image from prebuilt static base image with
+  user-specific, config-dependent dynamic setup steps
+    * enables one-time extra build per user/config change
+    * probably more complicated to get right
 
 ## Similar Projects
 
