@@ -1,9 +1,11 @@
+use std::convert::TryFrom;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use clap::ArgMatches;
 use serde::{Deserialize, Serialize};
 
 use super::aspects;
@@ -130,6 +132,39 @@ impl Config {
         }
 
         aspects
+    }
+}
+
+impl TryFrom<&ArgMatches<'_>> for Config {
+    type Error = Box<dyn Error>;
+    fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
+        let mut cfg = Config::empty();
+
+        if let Some(vs) = matches.values_of("mount") {
+            let mut mounts: Vec<aspects::Mount> = Vec::new();
+            for v in vs {
+                mounts.push(aspects::Mount::try_from(v)?);
+            }
+            cfg.mounts = Some(mounts);
+        }
+
+        if let Some(tz) = matches.value_of("timezone") {
+            cfg.timezone = Some(aspects::Timezone::try_from(tz)?);
+        }
+
+        if let Some(memory) = matches.value_of("memory") {
+            cfg.memory = Some(aspects::Memory::try_from(memory)?);
+        }
+
+        if let Some(cpu_shares) = matches.value_of("cpu-shares") {
+            cfg.cpu_shares = Some(aspects::CPUShares::try_from(cpu_shares)?);
+        }
+
+        if let Some(network) = matches.value_of("network") {
+            cfg.network = Some(aspects::Network::try_from(network)?);
+        }
+
+        Ok(cfg)
     }
 }
 

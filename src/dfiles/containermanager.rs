@@ -161,31 +161,7 @@ impl ContainerManager {
     /// $ firefox config --mount <hostpath>:<containerpath>
     /// ```
     fn config(&self, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
-        let mut cfg = config::Config::empty();
-
-        if let Some(vs) = matches.values_of("mount") {
-            let mut mounts: Vec<aspects::Mount> = Vec::new();
-            for v in vs {
-                mounts.push(aspects::Mount::try_from(v)?);
-            }
-            cfg.mounts = Some(mounts);
-        }
-
-        if let Some(tz) = matches.value_of("timezone") {
-            cfg.timezone = Some(aspects::Timezone::try_from(tz)?);
-        }
-
-        if let Some(memory) = matches.value_of("memory") {
-            cfg.memory = Some(aspects::Memory::try_from(memory)?);
-        }
-
-        if let Some(cpu_shares) = matches.value_of("cpu-shares") {
-            cfg.cpu_shares = Some(aspects::CPUShares::try_from(cpu_shares)?);
-        }
-
-        if let Some(network) = matches.value_of("network") {
-            cfg.network = Some(aspects::Network::try_from(network)?);
-        }
+        let cfg = config::Config::try_from(matches)?;
 
         let mut profile: Option<&str> = None;
         if matches.occurrences_of("profile") > 0 {
