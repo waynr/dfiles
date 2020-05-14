@@ -3,7 +3,7 @@ use std::env;
 use clap::ArgMatches;
 
 use dfiles::aspects;
-use dfiles::containermanager::default_debian_container_manager;
+use dfiles::containermanager::ContainerManager;
 
 struct Chrome {}
 
@@ -100,7 +100,7 @@ fn main() {
     let host_path_prefix = format!("{}/.config/google-chrome", home);
     let container_path = String::from("/data");
 
-    let mut mgr = default_debian_container_manager(
+    let mut mgr = ContainerManager::default_debian(
         "chrome".to_string(),
         vec![String::from("waynr/chrome:v0")],
         vec![

@@ -3,7 +3,7 @@ use std::env;
 use clap::ArgMatches;
 
 use dfiles::aspects;
-use dfiles::containermanager::default_debian_container_manager;
+use dfiles::containermanager::ContainerManager;
 
 struct Steam {}
 
@@ -39,7 +39,7 @@ fn main() {
 
     let version = env!("CARGO_PKG_VERSION");
 
-    let mut mgr = default_debian_container_manager(
+    let mut mgr = ContainerManager::default_debian(
         "stream".to_string(),
         vec![format!("{}:{}", "waynr/steam", version)],
         vec![

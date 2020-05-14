@@ -3,7 +3,7 @@ use std::env;
 use clap::ArgMatches;
 
 use dfiles::aspects;
-use dfiles::containermanager::default_debian_container_manager;
+use dfiles::containermanager::ContainerManager;
 
 struct Signal {}
 
@@ -46,7 +46,7 @@ fn main() {
     let host_path_prefix = format!("{}/.config/signal/", home);
     let container_path = format!("{}/.config/Signal/", home);
 
-    let mut mgr = default_debian_container_manager(
+    let mut mgr = ContainerManager::default_debian(
         "signal".to_string(),
         vec![String::from("waynr/signal:v0")],
         vec![

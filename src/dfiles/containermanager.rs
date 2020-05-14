@@ -27,45 +27,22 @@ pub struct ContainerManager {
     args: Vec<String>,
 }
 
-pub fn new_container_manager(
-    name: String,
-    tags: Vec<String>,
-    aspects: Vec<Box<dyn aspects::ContainerAspect>>,
-    args: Vec<String>,
-) -> ContainerManager {
-    ContainerManager {
-        name: name,
-        tags: tags,
-        aspects: aspects,
-        args: args,
-    }
-}
-
-pub fn default_debian_container_manager(
-    name: String,
-    tags: Vec<String>,
-    mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
-    args: Vec<String>,
-) -> ContainerManager {
-    aspects.insert(0, Box::new(Debian {}));
-    ContainerManager {
-        name: name,
-        tags: tags,
-        aspects: aspects,
-        args: args,
-    }
-}
-
-pub fn noop_container_manager(tags: Vec<String>) -> ContainerManager {
-    ContainerManager {
-        name: String::new(),
-        tags: tags,
-        args: Vec::new(),
-        aspects: Vec::new(),
-    }
-}
-
 impl ContainerManager {
+    pub fn default_debian(
+        name: String,
+        tags: Vec<String>,
+        mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+        args: Vec<String>,
+    ) -> ContainerManager {
+        aspects.insert(0, Box::new(Debian {}));
+        ContainerManager {
+            name: name,
+            tags: tags,
+            aspects: aspects,
+            args: args,
+        }
+    }
+
     fn image(&self) -> String {
         self.tags[0].clone()
     }
