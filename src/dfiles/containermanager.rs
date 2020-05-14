@@ -181,7 +181,9 @@ impl ContainerManager {
         }
         let cfg = config::Config::load(&self.name, profile)?;
 
-        Ok(cfg.get_aspects())
+        let cli_cfg = config::Config::try_from(matches)?;
+
+        Ok(cfg.merge(&cli_cfg, false).get_aspects())
     }
 
     pub fn execute(&mut self) {

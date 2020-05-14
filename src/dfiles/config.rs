@@ -81,8 +81,8 @@ impl Config {
             .merge(&profile_config, false))
     }
 
-    /// destructively merge values from other onto a copy of self, producing a new Config
-    fn merge(&self, other: &Config, overwrite: bool) -> Config {
+    /// Merge aspects from the given Config into a copy of the current, return a new Config.
+    pub fn merge(&self, other: &Config, overwrite: bool) -> Config {
         let mut cfg = (*self).clone();
 
         cfg.mounts = merge(&self.mounts, &other.mounts, overwrite);
