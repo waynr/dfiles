@@ -229,6 +229,18 @@ impl ContainerManager {
                 .long("timezone")
                 .takes_value(true)
                 .help("specify the timezone to be built into the container image"),
+            Arg::with_name("memory")
+                .long("memory")
+                .takes_value(true)
+                .help("specify the runtime memory resource limit"),
+            Arg::with_name("cpu-shares")
+                .long("cpu-shares")
+                .takes_value(true)
+                .help("specify the runtime proportion of cpu cycles for the container"),
+            Arg::with_name("network")
+                .long("network")
+                .takes_value(true)
+                .help("specify the runtime network mode for the container (default: bridge)"),
         ];
 
         for arg in &config_args {
