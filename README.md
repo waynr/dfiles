@@ -101,7 +101,7 @@ such as volume mounts, cpu/memory limits, etc:
 
 ```
 firefox config --mount <hostpath>:<containerpath>
-firefox config --cpu-limit 1024mb
+firefox config --memory 1024mb
 ```
 
 Configuration specified in this way will apply to all of the application's
