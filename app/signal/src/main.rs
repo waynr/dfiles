@@ -1,5 +1,6 @@
 use std::env;
 
+use anyhow::{Context, Result};
 use clap::ArgMatches;
 
 use dfiles::aspects;
@@ -41,7 +42,7 @@ impl aspects::ContainerAspect for Signal {
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
     let host_path_prefix = format!("{}/.config/signal/", home);
     let container_path = format!("{}/.config/Signal/", home);
@@ -58,7 +59,7 @@ fn main() {
                 codeset: "UTF-8".to_string(),
             }),
             Box::new(aspects::PulseAudio {}),
-            Box::new(aspects::CurrentUser {}),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),
@@ -76,4 +77,5 @@ fn main() {
     );
 
     mgr.execute();
+    Ok(())
 }

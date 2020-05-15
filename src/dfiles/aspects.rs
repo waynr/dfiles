@@ -5,7 +5,18 @@ use std::{env, fs};
 
 use clap::{Arg, ArgMatches};
 use serde::{Deserialize, Serialize};
+use thiserror;
+
 use users;
+
+#[derive(thiserror::Error, Debug)]
+pub enum AspectError {
+    #[error("could not identify user with uid `{0:?}`")]
+    MissingUser(String),
+
+    #[error("could not identify user with gid `{0:?}`")]
+    MissingGroup(String),
+}
 
 pub struct DockerfileSnippet {
     pub order: u8,
@@ -412,22 +423,42 @@ impl ContainerAspect for Name {
     }
 }
 
-pub struct CurrentUser {}
+pub struct CurrentUser {
+    name: String,
+    uid: String,
+    group: String,
+    gid: String,
+}
+
+impl CurrentUser {
+    pub fn detect() -> Result<Self, AspectError> {
+        let uid = users::get_current_uid();
+        let gid = users::get_current_gid();
+        let name = match users::get_user_by_uid(uid) {
+            Some(n) => n.name().to_string_lossy().to_string(),
+            None => return Err(AspectError::MissingUser(uid.to_string())),
+        };
+        let group = match users::get_user_by_uid(gid) {
+            Some(g) => g.name().to_string_lossy().to_string(),
+            None => return Err(AspectError::MissingGroup(gid.to_string())),
+        };
+        Ok(CurrentUser {
+            name: name,
+            uid: uid.to_string(),
+            group: group,
+            gid: gid.to_string(),
+        })
+    }
+}
 
 impl ContainerAspect for CurrentUser {
     fn name(&self) -> String {
-        let uid = users::get_current_uid();
-        let user = users::get_user_by_uid(uid).unwrap();
-        format!("User: {}", user.name().to_str().unwrap())
+        format!("User: {}", &self.name)
     }
     fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
         Vec::new()
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        let uid = users::get_current_uid();
-        let gid = users::get_current_gid();
-        let user = users::get_user_by_uid(uid).unwrap();
-        let group = users::get_group_by_gid(gid).unwrap();
         vec![
             DockerfileSnippet {
                 order: 80,
@@ -443,15 +474,15 @@ RUN adduser {user} video
 RUN mkdir -p /data && chown {user}.{user} /data
 RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
 "#,
-                    gid = gid,
-                    group = group.name().to_str().unwrap(),
-                    user = user.name().to_str().unwrap(),
-                    uid = uid,
+                    gid = &self.gid,
+                    group = &self.group,
+                    user = &self.name,
+                    uid = &self.uid,
                 ),
             },
             DockerfileSnippet {
                 order: 98,
-                content: format!("USER {}", user.name().to_str().unwrap()),
+                content: format!("USER {}", &self.name),
             },
         ]
     }

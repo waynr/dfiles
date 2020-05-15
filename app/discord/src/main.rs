@@ -1,5 +1,6 @@
 use std::env;
 
+use anyhow::{Context, Result};
 use clap::ArgMatches;
 
 use dfiles::aspects;
@@ -32,7 +33,7 @@ RUN apt-get update && apt-get --fix-broken install -y \
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
     let host_path_prefix = format!("{}/.config/discord/", home);
     let container_path = format!("{}/.config/discord/", home);
@@ -45,7 +46,7 @@ fn main() {
         vec![
             Box::new(Discord {}),
             Box::new(aspects::Name("discord".to_string())),
-            Box::new(aspects::CurrentUser {}),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::Locale {
                 language: "en".to_string(),
                 territory: "US".to_string(),
@@ -66,4 +67,5 @@ fn main() {
     );
 
     mgr.execute();
+    Ok(())
 }

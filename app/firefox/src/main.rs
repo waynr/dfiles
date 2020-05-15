@@ -1,5 +1,6 @@
 use std::env;
 
+use anyhow::{Context, Result};
 use clap::ArgMatches;
 
 use dfiles::aspects;
@@ -43,7 +44,7 @@ RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
     let host_path_prefix = format!("{}/.mozilla/firefox", home);
     let container_path = format!("{}/.mozilla/firefox/profile", home);
@@ -56,7 +57,7 @@ fn main() {
         vec![
             Box::new(Firefox {}),
             Box::new(aspects::Name("firefox".to_string())),
-            Box::new(aspects::CurrentUser {}),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::Locale {
                 language: "en".to_string(),
                 territory: "US".to_string(),
@@ -84,4 +85,5 @@ fn main() {
     );
 
     mgr.execute();
+    Ok(())
 }

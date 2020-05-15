@@ -1,5 +1,6 @@
 use std::env;
 
+use anyhow::{Context, Result};
 use clap::ArgMatches;
 
 use dfiles::aspects;
@@ -104,7 +105,7 @@ while ps -C skypeforlinux >/dev/null;do sleep 3;done "#,
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
     let host_path_prefix = format!("{}/.config/skypeforlinux", home);
     let container_path = format!("{}/.config/skypeforlinux", home);
@@ -117,7 +118,7 @@ fn main() {
         vec![
             Box::new(Skype {}),
             Box::new(aspects::Name("skype".to_string())),
-            Box::new(aspects::CurrentUser {}),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::Locale {
                 language: "en".to_string(),
                 territory: "US".to_string(),
@@ -141,4 +142,5 @@ fn main() {
     );
 
     mgr.execute();
+    Ok(())
 }
