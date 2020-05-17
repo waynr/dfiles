@@ -84,6 +84,5 @@ fn main() -> Result<()> {
         .collect(),
     );
 
-    mgr.execute();
-    Ok(())
+    mgr.execute()
 }

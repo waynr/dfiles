@@ -16,6 +16,9 @@ pub enum AspectError {
 
     #[error("could not identify user with gid `{0:?}`")]
     MissingGroup(String),
+
+    #[error("invalid mount string `{0:?}`")]
+    InvalidMount(String),
 }
 
 pub struct DockerfileSnippet {
@@ -293,7 +296,7 @@ impl ContainerAspect for CPUShares {
 }
 
 impl TryFrom<&str> for CPUShares {
-    type Error = &'static str;
+    type Error = anyhow::Error;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(CPUShares(value.to_string()))
     }
@@ -314,7 +317,7 @@ impl ContainerAspect for Memory {
 }
 
 impl TryFrom<&str> for Memory {
-    type Error = &'static str;
+    type Error = anyhow::Error;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(Memory(value.to_string()))
     }
@@ -379,11 +382,11 @@ impl ContainerAspect for Mount {
 }
 
 impl TryFrom<&str> for Mount {
-    type Error = &'static str;
+    type Error = AspectError;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         let vs: Vec<&str> = value.split(':').collect();
         if vs.len() != 2 {
-            return Err("invalid mount string");
+            return Err(AspectError::InvalidMount(value.to_string()));
         }
         Ok(Mount {
             host_path: vs[0].to_string(),

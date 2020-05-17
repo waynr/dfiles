@@ -1,6 +1,5 @@
 use std::convert::TryFrom;
 use std::env;
-use std::error::Error;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -34,7 +33,7 @@ impl Config {
         &self,
         application: Option<&str>,
         profile: Option<&str>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), anyhow::Error> {
         let existing_config = Config::load_layer(application, profile)?;
         let merged = existing_config.merge(self, true);
 
@@ -55,7 +54,7 @@ impl Config {
     fn load_layer(
         application: Option<&str>,
         profile: Option<&str>,
-    ) -> Result<Config, Box<dyn Error>> {
+    ) -> Result<Config, anyhow::Error> {
         let config_dir = get_config_dir(application, profile);
         let yaml_file = config_dir.join("config.yaml");
 
@@ -69,7 +68,7 @@ impl Config {
         Ok(cfg)
     }
 
-    pub fn load(application: &str, profile: Option<&str>) -> Result<Config, Box<dyn Error>> {
+    pub fn load(application: &str, profile: Option<&str>) -> Result<Config, anyhow::Error> {
         // load dfiles global config if it exists
         let global_config = Config::load_layer(None, None)?;
         // load application global config if it exists
@@ -136,7 +135,7 @@ impl Config {
 }
 
 impl TryFrom<&ArgMatches<'_>> for Config {
-    type Error = Box<dyn Error>;
+    type Error = anyhow::Error;
     fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
         let mut cfg = Config::empty();
 

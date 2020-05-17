@@ -66,6 +66,5 @@ fn main() -> Result<()> {
         vec!["discord"].into_iter().map(String::from).collect(),
     );
 
-    mgr.execute();
-    Ok(())
+    mgr.execute()
 }

@@ -20,7 +20,7 @@ path = "src/dfiles/mod.rs"
 
 [dependencies]
 shiplift = "0.5"
-dockworker = "0.0.14"
+dockworker = { git = "https://github.com/waynr/dockworker", branch = "replace-fail-with-thiserror"}
 tokio = "0.1"
 serde = { version = "1.0", features = ["derive"] }
 hyper = "0.12.35"
@@ -30,6 +30,7 @@ tempfile = "3.1.0"
 tar = "0.4.26"
 tzdata = "0.4.1"
 thiserror = "1.0"
+anyhow = "1.0"
 
 clap = "2.33"
 users = "0.10.0"

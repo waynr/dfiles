@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
-use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
@@ -47,7 +46,7 @@ impl ContainerManager {
         self.tags[0].clone()
     }
 
-    fn run<'a>(&self, matches: &'a ArgMatches<'a>) -> Result<(), Box<dyn Error>> {
+    fn run<'a>(&self, matches: &'a ArgMatches<'a>) -> Result<(), anyhow::Error> {
         let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
 
         for aspect in &self.aspects {
@@ -67,18 +66,18 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn build(&self) -> Result<(), Box<dyn Error>> {
-        let mut tar_file = NamedTempFile::new().unwrap();
+    fn build(&self) -> Result<(), anyhow::Error> {
+        let mut tar_file = NamedTempFile::new()?;
         self.generate_archive_impl(&mut tar_file.as_file_mut())?;
 
-        let docker = Docker::connect_with_defaults().unwrap();
+        let docker = Docker::connect_with_defaults()?;
         let options = ContainerBuildOptions {
             dockerfile: "Dockerfile".into(),
             t: self.tags.clone(),
             ..ContainerBuildOptions::default()
         };
 
-        let res = docker.build_image(options, tar_file.path()).unwrap();
+        let res = docker.build_image(options, tar_file.path())?;
         BufReader::new(res)
             .lines()
             .filter_map(Result::ok)
@@ -88,7 +87,7 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn generate_archive_impl(&self, f: &mut std::fs::File) -> Result<(), Box<dyn Error>> {
+    fn generate_archive_impl(&self, f: &mut std::fs::File) -> Result<(), anyhow::Error> {
         let mut a = Builder::new(f);
 
         let mut contents: BTreeMap<u8, String> = BTreeMap::new();
@@ -121,7 +120,7 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn generate_archive(&self) -> Result<(), Box<dyn Error>> {
+    fn generate_archive(&self) -> Result<(), anyhow::Error> {
         let mut tar_file = File::create("whatever.tar")?;
         self.generate_archive_impl(&mut tar_file)
     }
@@ -137,7 +136,7 @@ impl ContainerManager {
     /// ```bash
     /// $ firefox config --mount <hostpath>:<containerpath>
     /// ```
-    fn config(&self, matches: &ArgMatches) -> Result<(), Box<dyn Error>> {
+    fn config(&self, matches: &ArgMatches) -> Result<(), anyhow::Error> {
         let cfg = config::Config::try_from(matches)?;
 
         let mut profile: Option<&str> = None;
@@ -151,7 +150,7 @@ impl ContainerManager {
     fn load_config(
         &self,
         matches: &ArgMatches,
-    ) -> Result<Vec<Box<dyn aspects::ContainerAspect>>, Box<dyn Error>> {
+    ) -> Result<Vec<Box<dyn aspects::ContainerAspect>>, anyhow::Error> {
         let mut profile: Option<&str> = None;
         if matches.occurrences_of("profile") > 0 {
             profile = matches.value_of("profile");
@@ -163,7 +162,7 @@ impl ContainerManager {
         Ok(cfg.merge(&cli_cfg, false).get_aspects())
     }
 
-    pub fn execute(&mut self) {
+    pub fn execute(&mut self) -> Result<(), anyhow::Error> {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut build = SubCommand::with_name("build").about("build app container");
         let mut config = SubCommand::with_name("config").about("configure app container settings");
@@ -224,11 +223,11 @@ impl ContainerManager {
         let matches = app.get_matches();
 
         match matches.subcommand() {
-            ("run", Some(subm)) => self.run(&subm).unwrap(),
-            ("build", _) => self.build().unwrap(),
-            ("config", Some(subm)) => self.config(&subm).unwrap(),
-            ("generate-archive", _) => self.generate_archive().unwrap(),
-            (_, _) => println!("{}", matches.usage()),
+            ("run", Some(subm)) => self.run(&subm),
+            ("build", _) => self.build(),
+            ("config", Some(subm)) => self.config(&subm),
+            ("generate-archive", _) => self.generate_archive(),
+            (_, _) => Ok(println!("{}", matches.usage())),
         }
     }
 }
@@ -239,7 +238,7 @@ fn add_file_to_archive<W: Write>(
     contents: &str,
 ) -> Result<(), std::io::Error> {
     let mut header = Header::new_gnu();
-    header.set_path(name).unwrap();
+    header.set_path(name)?;
     header.set_size(contents.len() as u64);
     header.set_cksum();
     b.append(&header, contents.as_bytes())
