@@ -129,7 +129,7 @@ firefox config --profile --mount <hostpath>:<containerpath>
   * [ ] Implement some kind of automated image build and push.
   * [x] Replace all `unwrap` and `Box<dyn Error>` instances with better error
   handling
-  * [ ] Figure out some kind of data directory approach that isolates dfiles
+  * [x] Figure out some kind of data directory approach that isolates dfiles
   application data directories to some kind of dfiles-specific XDG data
   directory. For example, don't let firefox use $HOME/.mozilla/firefox --
   dfiles apps should not mess with application data managed by vanilla installs

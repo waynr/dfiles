@@ -1,7 +1,6 @@
 use std::env;
 
 use anyhow::{Context, Result};
-use clap::ArgMatches;
 
 use dfiles::aspects;
 use dfiles::containermanager::ContainerManager;
@@ -11,10 +10,6 @@ struct Signal {}
 impl aspects::ContainerAspect for Signal {
     fn name(&self) -> String {
         String::from("signal")
-    }
-
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
     }
 
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
@@ -44,12 +39,12 @@ impl aspects::ContainerAspect for Signal {
 
 fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
-    let host_path_prefix = format!("{}/.config/signal/", home);
     let container_path = format!("{}/.config/Signal/", home);
 
     let mut mgr = ContainerManager::default_debian(
         "signal".to_string(),
         vec![String::from("waynr/signal:v0")],
+        vec![container_path],
         vec![
             Box::new(Signal {}),
             Box::new(aspects::Name("signal".to_string())),
@@ -65,10 +60,6 @@ fn main() -> Result<()> {
             Box::new(aspects::DBus {}),
             Box::new(aspects::SysAdmin {}),
             Box::new(aspects::Shm {}),
-            Box::new(aspects::Profile {
-                host_path_prefix: host_path_prefix,
-                container_path: container_path,
-            }),
         ],
         vec!["/opt/Signal/signal-desktop"]
             .into_iter()

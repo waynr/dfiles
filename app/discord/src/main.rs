@@ -1,7 +1,6 @@
 use std::env;
 
 use anyhow::{Context, Result};
-use clap::ArgMatches;
 
 use dfiles::aspects;
 use dfiles::containermanager::ContainerManager;
@@ -11,10 +10,6 @@ struct Discord {}
 impl aspects::ContainerAspect for Discord {
     fn name(&self) -> String {
         String::from("discord")
-    }
-
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
     }
 
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
@@ -35,7 +30,6 @@ RUN apt-get update && apt-get --fix-broken install -y \
 
 fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
-    let host_path_prefix = format!("{}/.config/discord/", home);
     let container_path = format!("{}/.config/discord/", home);
 
     let version = env!("CARGO_PKG_VERSION");
@@ -43,6 +37,7 @@ fn main() -> Result<()> {
     let mut mgr = ContainerManager::default_debian(
         "discord".to_string(),
         vec![format!("{}:{}", "waynr/discord", version)],
+        vec![container_path],
         vec![
             Box::new(Discord {}),
             Box::new(aspects::Name("discord".to_string())),
@@ -58,10 +53,6 @@ fn main() -> Result<()> {
             Box::new(aspects::DBus {}),
             Box::new(aspects::SysAdmin {}),
             Box::new(aspects::Shm {}),
-            Box::new(aspects::Profile {
-                host_path_prefix: host_path_prefix,
-                container_path: container_path,
-            }),
         ],
         vec!["discord"].into_iter().map(String::from).collect(),
     );

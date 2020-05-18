@@ -3,11 +3,13 @@ use std::fmt;
 use std::path::Path;
 use std::{env, fs};
 
+use anyhow::Result;
 use clap::{Arg, ArgMatches};
 use serde::{Deserialize, Serialize};
 use thiserror;
-
 use users;
+
+use super::dirs;
 
 #[derive(thiserror::Error, Debug)]
 pub enum AspectError {
@@ -33,7 +35,9 @@ pub struct ContainerFile {
 
 pub trait ContainerAspect {
     fn name(&self) -> String;
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String>;
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(Vec::new())
+    }
     fn config_args(&self) -> Vec<Arg> {
         Vec::new()
     }
@@ -50,7 +54,12 @@ pub trait ContainerAspect {
 
 impl fmt::Display for dyn ContainerAspect {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} - {:?}", self.name(), self.run_args(None))
+        write!(
+            f,
+            "{} - {:?}",
+            self.name(),
+            self.run_args(None).unwrap_or(Vec::new())
+        )
     }
 }
 
@@ -59,12 +68,12 @@ impl ContainerAspect for PulseAudio {
     fn name(&self) -> String {
         String::from("PulseAudio")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         let home = env::var("HOME").expect("HOME must be set");
         let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("HOME must be set");
         let pulsedir = format!("{}/{}", xdg_runtime_dir, "pulse");
 
-        vec![
+        Ok(vec![
             "-v",
             format!("{0}/.pulse:{0}/.pulse", home).as_str(),
             "-v",
@@ -74,7 +83,7 @@ impl ContainerAspect for PulseAudio {
         ]
         .into_iter()
         .map(String::from)
-        .collect()
+        .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         vec![
@@ -123,11 +132,11 @@ impl ContainerAspect for Alsa {
     fn name(&self) -> String {
         String::from("Alsa")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["--device", "/dev/snd"]
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["--device", "/dev/snd"]
             .into_iter()
             .map(String::from)
-            .collect()
+            .collect())
     }
 }
 
@@ -136,10 +145,10 @@ impl ContainerAspect for X11 {
     fn name(&self) -> String {
         String::from("X11")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         let display = env::var("DISPLAY").expect("DISPLAY must be set");
 
-        vec![
+        Ok(vec![
             "-e",
             format!("DISPLAY=unix{}", display).as_str(),
             "-v",
@@ -149,7 +158,7 @@ impl ContainerAspect for X11 {
         ]
         .into_iter()
         .map(String::from)
-        .collect()
+        .collect())
     }
 }
 
@@ -158,7 +167,7 @@ impl ContainerAspect for Video {
     fn name(&self) -> String {
         String::from("Video")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         let video_devices: Vec<String> = fs::read_dir(Path::new("/dev"))
             .expect("get entries for dir")
             .filter_map(Result::ok)
@@ -173,11 +182,11 @@ impl ContainerAspect for Video {
             .filter_map(Result::ok)
             .collect();
 
-        video_devices
+        Ok(video_devices
             .iter()
             .map(|s| vec![String::from("--device"), s.to_string()])
             .flatten()
-            .collect()
+            .collect())
     }
 }
 
@@ -186,11 +195,11 @@ impl ContainerAspect for DBus {
     fn name(&self) -> String {
         String::from("DBus")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         let home = env::var("HOME").expect("HOME must be set");
         let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("XDG_RUNTIME_DIR must be set");
 
-        vec![
+        Ok(vec![
             "-v",
             format!("{0}/bus:{0}/bus", xdg_runtime_dir).as_str(),
             "-v",
@@ -202,7 +211,7 @@ impl ContainerAspect for DBus {
         ]
         .into_iter()
         .map(String::from)
-        .collect()
+        .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         vec![DockerfileSnippet {
@@ -228,11 +237,11 @@ impl ContainerAspect for Network {
     fn name(&self) -> String {
         String::from("Network")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["--net", &self.mode]
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["--net", &self.mode]
             .into_iter()
             .map(String::from)
-            .collect()
+            .collect())
     }
 }
 
@@ -250,11 +259,11 @@ impl ContainerAspect for SysAdmin {
     fn name(&self) -> String {
         String::from("SysAdmin")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["--cap-add", "SYS_ADMIN"]
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["--cap-add", "SYS_ADMIN"]
             .into_iter()
             .map(String::from)
-            .collect()
+            .collect())
     }
 }
 
@@ -263,8 +272,8 @@ impl ContainerAspect for TTY {
     fn name(&self) -> String {
         String::from("TTY")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["-i", "-t"].into_iter().map(String::from).collect()
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["-i", "-t"].into_iter().map(String::from).collect())
     }
 }
 
@@ -273,11 +282,11 @@ impl ContainerAspect for Shm {
     fn name(&self) -> String {
         String::from("Shm")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["-v", "/dev/shm:/dev/shm"]
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["-v", "/dev/shm:/dev/shm"]
             .into_iter()
             .map(String::from)
-            .collect()
+            .collect())
     }
 }
 
@@ -287,11 +296,11 @@ impl ContainerAspect for CPUShares {
     fn name(&self) -> String {
         String::from("CPUShares")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["--cpu-shares", self.0.as_str()]
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["--cpu-shares", self.0.as_str()]
             .into_iter()
             .map(String::from)
-            .collect()
+            .collect())
     }
 }
 
@@ -308,11 +317,11 @@ impl ContainerAspect for Memory {
     fn name(&self) -> String {
         String::from("Memory")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        vec!["--memory", self.0.as_str()]
+    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec!["--memory", self.0.as_str()]
             .into_iter()
             .map(String::from)
-            .collect()
+            .collect())
     }
 }
 
@@ -324,14 +333,14 @@ impl TryFrom<&str> for Memory {
 }
 
 pub struct Profile {
-    pub host_path_prefix: String,
-    pub container_path: String,
+    pub name: String,
+    pub container_paths: Vec<String>,
 }
 impl ContainerAspect for Profile {
     fn name(&self) -> String {
         String::from("Profile")
     }
-    fn run_args(&self, matches: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
         let mut profile = "default";
         if let Some(m) = matches {
             if let Some(c) = m.value_of("profile") {
@@ -339,15 +348,20 @@ impl ContainerAspect for Profile {
             }
         }
 
-        let host_path = format!("{}/{}", self.host_path_prefix, profile);
+        let host_path = dirs::get_data_dir(Some(&self.name), Some(profile))?;
+        fs::create_dir_all(&host_path)?;
 
-        vec![
-            "-v",
-            format!("{}:{}", host_path, self.container_path).as_str(),
-        ]
-        .into_iter()
-        .map(String::from)
-        .collect()
+        Ok(self
+            .container_paths
+            .iter()
+            .map(|s| {
+                vec![
+                    "-v".to_string(),
+                    format!("{}:{}", host_path.to_path_buf().to_string_lossy(), s),
+                ]
+            })
+            .flatten()
+            .collect())
     }
 
     fn config_args(&self) -> Vec<Arg> {
@@ -370,14 +384,14 @@ impl ContainerAspect for Mount {
     fn name(&self) -> String {
         String::from("Mount")
     }
-    fn run_args(&self, _matches: Option<&ArgMatches>) -> Vec<String> {
-        vec![
+    fn run_args(&self, _matches: Option<&ArgMatches>) -> Result<Vec<String>> {
+        Ok(vec![
             "-v",
             format!("{}:{}", self.host_path, self.container_path).as_str(),
         ]
         .into_iter()
         .map(String::from)
-        .collect()
+        .collect())
     }
 }
 
@@ -400,7 +414,7 @@ impl ContainerAspect for Name {
     fn name(&self) -> String {
         String::from("Name")
     }
-    fn run_args(&self, matches: Option<&ArgMatches>) -> Vec<String> {
+    fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
         let mut container_name: String = "default".to_string();
         if let Some(m) = matches {
             if let Some(c) = m.value_of("container_name") {
@@ -409,9 +423,9 @@ impl ContainerAspect for Name {
                 container_name = format!("{}-{}", self.0, c);
             }
         }
-        vec!["--name".to_string(), container_name]
+        Ok(vec!["--name".to_string(), container_name]
             .into_iter()
-            .collect()
+            .collect())
     }
 
     fn config_args(&self) -> Vec<Arg> {
@@ -458,9 +472,6 @@ impl ContainerAspect for CurrentUser {
     fn name(&self) -> String {
         format!("User: {}", &self.name)
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
-    }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         vec![
             DockerfileSnippet {
@@ -505,9 +516,6 @@ impl ContainerAspect for Locale {
     fn name(&self) -> String {
         format!("AutoLocale")
     }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
-    }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         let locale = format!("{}_{}.{}", self.language, self.territory, self.codeset);
         vec![DockerfileSnippet {
@@ -530,9 +538,6 @@ pub struct Timezone(pub String);
 impl ContainerAspect for Timezone {
     fn name(&self) -> String {
         format!("Timezone")
-    }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         vec![DockerfileSnippet {

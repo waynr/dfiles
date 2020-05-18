@@ -1,7 +1,6 @@
 use std::env;
 
 use anyhow::{Context, Result};
-use clap::ArgMatches;
 
 use dfiles::aspects;
 use dfiles::containermanager::ContainerManager;
@@ -11,10 +10,6 @@ struct Steam {}
 impl aspects::ContainerAspect for Steam {
     fn name(&self) -> String {
         String::from("steam")
-    }
-
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
     }
 
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
@@ -35,7 +30,6 @@ RUN apt-get update && yes 'I AGREE' | apt-get install -y \
 
 fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
-    let host_path_prefix = format!("{}/.steam/", home);
     let container_path = format!("{}/.steam/", home);
 
     let version = env!("CARGO_PKG_VERSION");
@@ -43,6 +37,7 @@ fn main() -> Result<()> {
     let mut mgr = ContainerManager::default_debian(
         "stream".to_string(),
         vec![format!("{}:{}", "waynr/steam", version)],
+        vec![container_path],
         vec![
             Box::new(Steam {}),
             Box::new(aspects::Name("steam".to_string())),
@@ -58,10 +53,6 @@ fn main() -> Result<()> {
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),
             Box::new(aspects::Shm {}),
-            Box::new(aspects::Profile {
-                host_path_prefix: host_path_prefix,
-                container_path: container_path,
-            }),
         ],
         vec!["/usr/games/steam"]
             .into_iter()

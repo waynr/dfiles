@@ -1,7 +1,4 @@
-use std::env;
-
 use anyhow::{Context, Result};
-use clap::ArgMatches;
 
 use dfiles::aspects;
 use dfiles::containermanager::ContainerManager;
@@ -11,10 +8,6 @@ struct Chrome {}
 impl aspects::ContainerAspect for Chrome {
     fn name(&self) -> String {
         String::from("Chrome")
-    }
-
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
     }
 
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
@@ -97,13 +90,12 @@ RUN chmod 644 /etc/fonts/local.conf"#,
 }
 
 fn main() -> Result<()> {
-    let home = env::var("HOME").expect("HOME must be set");
-    let host_path_prefix = format!("{}/.config/google-chrome", home);
     let container_path = String::from("/data");
 
     let mut mgr = ContainerManager::default_debian(
         "chrome".to_string(),
         vec![String::from("waynr/chrome:v0")],
+        vec![container_path],
         vec![
             Box::new(Chrome {}),
             Box::new(aspects::Name("chrome".to_string())),
@@ -119,10 +111,6 @@ fn main() -> Result<()> {
             Box::new(aspects::DBus {}),
             Box::new(aspects::SysAdmin {}),
             Box::new(aspects::Shm {}),
-            Box::new(aspects::Profile {
-                host_path_prefix: host_path_prefix,
-                container_path: container_path,
-            }),
         ],
         vec!["google-chrome", "--user-data-dir=/data"]
             .into_iter()

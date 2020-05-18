@@ -22,6 +22,7 @@ struct BuildOutput {
 pub struct ContainerManager {
     name: String,
     tags: Vec<String>,
+    container_paths: Vec<String>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
 }
@@ -30,6 +31,7 @@ impl ContainerManager {
     pub fn default_debian(
         name: String,
         tags: Vec<String>,
+        container_paths: Vec<String>,
         mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
         args: Vec<String>,
     ) -> ContainerManager {
@@ -37,6 +39,7 @@ impl ContainerManager {
         ContainerManager {
             name: name,
             tags: tags,
+            container_paths: container_paths,
             aspects: aspects,
             args: args,
         }
@@ -51,13 +54,13 @@ impl ContainerManager {
 
         for aspect in &self.aspects {
             println!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches)));
+            args.extend(aspect.run_args(Some(&matches))?);
         }
 
         let config_aspects = self.load_config(matches)?;
         for aspect in &config_aspects {
             println!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches)));
+            args.extend(aspect.run_args(Some(&matches))?);
         }
 
         args.push(self.image().to_string());
@@ -171,6 +174,13 @@ impl ContainerManager {
 
         let mut app = App::new(&self.name).version("0.0");
 
+        self.aspects.insert(
+            0,
+            Box::new(aspects::Profile {
+                name: self.name.clone(),
+                container_paths: self.container_paths.clone(),
+            }),
+        );
         let config_args: Vec<Arg> = vec![
             Arg::with_name("mount")
                 .short("m")
@@ -249,9 +259,6 @@ struct Debian {}
 impl aspects::ContainerAspect for Debian {
     fn name(&self) -> String {
         String::from("Debian")
-    }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Vec<String> {
-        Vec::new()
     }
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
         vec![
