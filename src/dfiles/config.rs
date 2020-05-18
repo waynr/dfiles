@@ -1,21 +1,13 @@
 use std::convert::TryFrom;
 use std::fs;
 use std::io::Write;
-use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::ArgMatches;
-use directories_next::ProjectDirs;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 use super::aspects;
-
-#[derive(Error, Debug)]
-enum ConfigError {
-    #[error("could not identify directory")]
-    MissingDirectory,
-}
+use super::dirs;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -41,7 +33,7 @@ impl Config {
         let existing_config = Config::load_layer(application, profile)?;
         let merged = existing_config.merge(self, true);
 
-        let config_dir = get_config_dir(application, profile)?;
+        let config_dir = dirs::get_config_dir(application, profile)?;
         fs::create_dir_all(&config_dir)?;
 
         let path = config_dir.join("config.yaml");
@@ -59,7 +51,7 @@ impl Config {
         application: Option<&str>,
         profile: Option<&str>,
     ) -> Result<Config, anyhow::Error> {
-        let config_dir = get_config_dir(application, profile)?;
+        let config_dir = dirs::get_config_dir(application, profile)?;
         let yaml_file = config_dir.join("config.yaml");
 
         let mut cfg = Config::empty();
@@ -168,34 +160,6 @@ impl TryFrom<&ArgMatches<'_>> for Config {
         }
 
         Ok(cfg)
-    }
-}
-
-enum DirType {
-    Config,
-}
-
-fn get_config_dir(application: Option<&str>, profile: Option<&str>) -> Result<PathBuf> {
-    get_dir(DirType::Config, application, profile)
-}
-
-fn get_dir(dir_type: DirType, application: Option<&str>, profile: Option<&str>) -> Result<PathBuf> {
-    if let Some(proj_dirs) = ProjectDirs::from("", "", "dfiles") {
-        let mut dir = match dir_type {
-            DirType::Config => proj_dirs.config_dir().to_path_buf(),
-        };
-
-        if let Some(s) = application {
-            dir = dir.join("applications").join(s);
-        }
-
-        if let Some(s) = profile {
-            dir = dir.join("profiles").join(s);
-        }
-
-        Ok(dir)
-    } else {
-        Err(ConfigError::MissingDirectory.into())
     }
 }
 
