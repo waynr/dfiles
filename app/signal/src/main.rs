@@ -59,7 +59,6 @@ fn main() -> Result<()> {
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),
             Box::new(aspects::SysAdmin {}),
-            Box::new(aspects::Shm {}),
         ],
         vec!["/opt/Signal/signal-desktop"]
             .into_iter()

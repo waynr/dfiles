@@ -135,7 +135,7 @@ firefox config --profile --mount <hostpath>:<containerpath>
   dfiles apps should not mess with application data managed by vanilla installs
   of the same app
   * [ ] Figure out container versioning schema of some kind.
-  * [ ] Prune current apps of unnecessary aspects (most probably don't need
+  * [x] Prune current apps of unnecessary aspects (most probably don't need
   SysAdmin or Shm)
 * [x] Remove NetworkHost default behavior.
 * [ ] `userns-remap` alternative to entrypoint user script.
