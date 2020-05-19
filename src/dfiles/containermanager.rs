@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{App, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
 use serde::Deserialize;
 use serde_json::from_str;
@@ -181,33 +181,8 @@ impl ContainerManager {
                 container_paths: self.container_paths.clone(),
             }),
         );
-        let config_args: Vec<Arg> = vec![
-            Arg::with_name("mount")
-                .short("m")
-                .long("mount")
-                .multiple(true)
-                .takes_value(true)
-                .help("specify a local path to be mapped into the container filesystem at runtime"),
-            Arg::with_name("timezone")
-                .short("t")
-                .long("timezone")
-                .takes_value(true)
-                .help("specify the timezone to be built into the container image"),
-            Arg::with_name("memory")
-                .long("memory")
-                .takes_value(true)
-                .help("specify the runtime memory resource limit"),
-            Arg::with_name("cpu-shares")
-                .long("cpu-shares")
-                .takes_value(true)
-                .help("specify the runtime proportion of cpu cycles for the container"),
-            Arg::with_name("network")
-                .long("network")
-                .takes_value(true)
-                .help("specify the runtime network mode for the container (default: bridge)"),
-        ];
 
-        for arg in &config_args {
+        for arg in &config::cli_args() {
             run = run.arg(arg);
             config = config.arg(arg);
         }

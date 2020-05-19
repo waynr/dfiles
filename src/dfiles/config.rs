@@ -3,7 +3,7 @@ use std::fs;
 use std::io::Write;
 
 use anyhow::Result;
-use clap::ArgMatches;
+use clap::{Arg, ArgMatches};
 use serde::{Deserialize, Serialize};
 
 use super::aspects;
@@ -186,6 +186,34 @@ fn merge<T: Clone>(
         x if x > 0 => Some(new),
         _ => None,
     }
+}
+
+pub fn cli_args<'a, 'b>() -> Vec<Arg<'a, 'b>> {
+    vec![
+        Arg::with_name("mount")
+            .short("m")
+            .long("mount")
+            .multiple(true)
+            .takes_value(true)
+            .help("specify a local path to be mapped into the container filesystem at runtime"),
+        Arg::with_name("timezone")
+            .short("t")
+            .long("timezone")
+            .takes_value(true)
+            .help("specify the timezone to be built into the container image"),
+        Arg::with_name("memory")
+            .long("memory")
+            .takes_value(true)
+            .help("specify the runtime memory resource limit"),
+        Arg::with_name("cpu-shares")
+            .long("cpu-shares")
+            .takes_value(true)
+            .help("specify the runtime proportion of cpu cycles for the container"),
+        Arg::with_name("network")
+            .long("network")
+            .takes_value(true)
+            .help("specify the runtime network mode for the container (default: bridge)"),
+    ]
 }
 
 #[cfg(test)]
