@@ -21,6 +21,9 @@ pub enum AspectError {
 
     #[error("invalid mount string `{0:?}`")]
     InvalidMount(String),
+
+    #[error("invalide locale `{0:?}`")]
+    InvalidLocale(String),
 }
 
 pub struct DockerfileSnippet {
@@ -506,6 +509,7 @@ RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
 // build time; should probably be configurable by command line flag but we don't yet support
 // built-time command line flags and I'm feeling really lazy and just want to dispense entirely
 // with my old base docker images so for now it's only configurable at compile time.
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Locale {
     pub language: String,
     pub territory: String,
@@ -529,6 +533,35 @@ ENV LANG={locale}"#,
                 codeset = self.codeset,
             ),
         }]
+    }
+}
+
+impl TryFrom<&str> for Locale {
+    type Error = AspectError;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let mut locale = Locale {
+            language: String::new(),
+            territory: String::new(),
+            codeset: String::new(),
+        };
+        let remainder: String;
+
+        if let Some(i) = value.find('_') {
+            let (left, right) = value.split_at(i);
+            locale.language = left.to_string();
+            remainder = right.to_string();
+        } else {
+            return Err(AspectError::InvalidLocale(value.to_string()));
+        }
+
+        if let Some(i) = remainder.find('.') {
+            let (left, right) = value.split_at(i);
+            locale.territory = left.to_string();
+            locale.codeset = right.to_string();
+        } else {
+            return Err(AspectError::InvalidLocale(value.to_string()));
+        }
+        Ok(locale)
     }
 }
 

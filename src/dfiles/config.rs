@@ -16,6 +16,7 @@ pub struct Config {
     pub memory: Option<aspects::Memory>,
     pub cpu_shares: Option<aspects::CPUShares>,
     pub network: Option<aspects::Network>,
+    pub locale: Option<aspects::Locale>,
 }
 
 impl Config {
@@ -26,6 +27,7 @@ impl Config {
             memory: None,
             cpu_shares: None,
             network: None,
+            locale: None,
         }
     }
 
@@ -98,6 +100,10 @@ impl Config {
             cfg.network = Some(v.clone());
         }
 
+        if let Some(v) = &other.locale {
+            cfg.locale = Some(v.clone());
+        }
+
         cfg
     }
 
@@ -124,6 +130,10 @@ impl Config {
 
         if let Some(network) = &self.network {
             aspects.push(Box::new(network.clone()));
+        }
+
+        if let Some(locale) = &self.locale {
+            aspects.push(Box::new(locale.clone()));
         }
 
         aspects
@@ -157,6 +167,10 @@ impl TryFrom<&ArgMatches<'_>> for Config {
 
         if let Some(network) = matches.value_of("network") {
             cfg.network = Some(aspects::Network::try_from(network)?);
+        }
+
+        if let Some(locale) = matches.value_of("locale") {
+            cfg.locale = Some(aspects::Locale::try_from(locale)?);
         }
 
         Ok(cfg)
@@ -213,6 +227,10 @@ pub fn cli_args<'a, 'b>() -> Vec<Arg<'a, 'b>> {
             .long("network")
             .takes_value(true)
             .help("specify the runtime network mode for the container (default: bridge)"),
+        Arg::with_name("locale")
+            .long("locale")
+            .takes_value(true)
+            .help("specify the locale in the form <language>_<territory>.<codeset> for the container (default: en_US.UTF8)"),
     ]
 }
 
