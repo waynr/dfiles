@@ -53,11 +53,6 @@ fn main() -> Result<()> {
             Box::new(Firefox {}),
             Box::new(aspects::Name("firefox".to_string())),
             Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
-            Box::new(aspects::Locale {
-                language: "en".to_string(),
-                territory: "US".to_string(),
-                codeset: "UTF-8".to_string(),
-            }),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),

@@ -48,11 +48,6 @@ fn main() -> Result<()> {
         vec![
             Box::new(Signal {}),
             Box::new(aspects::Name("signal".to_string())),
-            Box::new(aspects::Locale {
-                language: "en".to_string(),
-                territory: "US".to_string(),
-                codeset: "UTF-8".to_string(),
-            }),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::X11 {}),
