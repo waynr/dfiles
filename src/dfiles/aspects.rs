@@ -343,6 +343,7 @@ impl ContainerAspect for Profile {
     fn name(&self) -> String {
         String::from("Profile")
     }
+
     fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
         let mut profile = "default";
         if let Some(m) = matches {
@@ -352,19 +353,21 @@ impl ContainerAspect for Profile {
         }
 
         let host_path = dirs::get_data_dir(Some(&self.name), Some(profile))?;
-        fs::create_dir_all(&host_path)?;
 
-        Ok(self
-            .container_paths
-            .iter()
-            .map(|s| {
-                vec![
-                    "-v".to_string(),
-                    format!("{}:{}", host_path.to_path_buf().to_string_lossy(), s),
-                ]
-            })
-            .flatten()
-            .collect())
+        let mut output: Vec<String> = Vec::new();
+        for s in &self.container_paths {
+            let mut s_path = Path::new(&s);
+            if let Ok(v) = s_path.strip_prefix("/") {
+                s_path = v
+            }
+            let p = host_path.join(s_path);
+            fs::create_dir_all(&p)?;
+
+            output.push("-v".to_string());
+            output.push(format!("{}:{}", p.to_path_buf().to_string_lossy(), s))
+        }
+
+        Ok(output)
     }
 
     fn config_args(&self) -> Vec<Arg> {
