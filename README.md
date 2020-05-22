@@ -152,10 +152,26 @@ firefox config --profile --mount <hostpath>:<containerpath>
 
 ### jessfraz/dockerfiles
 
-It is strongly influenced by github.com/jessfraz/dockerfiles and this [blog
-post](https://blog.jessfraz.com/post/docker-containers-on-the-desktop/). These
-influences led me to work on my own dockerfiles repository for a while, mostly
-as an ancillary exercise in becoming proficient with Docker when it became
-obvious to me 
+`dfiles` is strongly influenced by github.com/jessfraz/dockerfiles and this
+[blog post](https://blog.jessfraz.com/post/docker-containers-on-the-desktop/).
+
+Significant differences include:
+
+* `dfiles` generates Dockerfiles dynamically based on a combination of
+hard-coded and user-configured "Aspects"
+  * makes it easy to share code between different applications
+* `dfiles` hides implementation details of running containers by generating
+`docker run` command lines
 
 ### snap
+
+Snap is a distro-agnostic package manager that distributes containerized
+applications, similar in principle to the end result produce by `dfiles` but
+more well-fleshed out and probably more suitable if all you care about is just
+installing a thing and getting it running.
+
+Significant differences include:
+
+* `dfiles` targets Docker as its container runtime and aims to (eventually)
+leverage the docker registry ecosystem for distribution of images
+* `dfiles` is more developer-oriented for people who like to build their own images
