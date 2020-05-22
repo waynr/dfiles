@@ -526,7 +526,7 @@ RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
 // build time; should probably be configurable by command line flag but we don't yet support
 // built-time command line flags and I'm feeling really lazy and just want to dispense entirely
 // with my old base docker images so for now it's only configurable at compile time.
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Locale {
     pub language: String,
     pub territory: String,
@@ -566,19 +566,39 @@ impl TryFrom<&str> for Locale {
         if let Some(i) = value.find('_') {
             let (left, right) = value.split_at(i);
             locale.language = left.to_string();
+            let (_, right) = right.split_at(1);
             remainder = right.to_string();
         } else {
             return Err(AspectError::InvalidLocale(value.to_string()));
         }
 
         if let Some(i) = remainder.find('.') {
-            let (left, right) = value.split_at(i);
+            let (left, right) = remainder.split_at(i);
             locale.territory = left.to_string();
+            let (_, right) = right.split_at(1);
             locale.codeset = right.to_string();
         } else {
             return Err(AspectError::InvalidLocale(value.to_string()));
         }
         Ok(locale)
+    }
+}
+
+#[cfg(test)]
+mod locale_should {
+    use super::*;
+
+    #[test]
+    fn convert_from_str() -> Result<(), AspectError> {
+        assert_eq!(
+            Locale::try_from("en_US.UTF-8")?,
+            Locale {
+                language: "en".to_string(),
+                territory: "US".to_string(),
+                codeset: "UTF-8".to_string(),
+            }
+        );
+        Ok(())
     }
 }
 
