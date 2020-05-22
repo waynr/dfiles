@@ -66,7 +66,7 @@ firefox build
 ```
 
 You should see the same output as you would see building a docker image using
-`docker build`.
+`docker build .`.
 
 #### TODO: Install from crates.io
 
@@ -105,7 +105,7 @@ firefox config --memory 1024mb
 ```
 
 Configuration specified in this way will apply to all of the application's
-profiles. To limit config settings to a particular profile:
+profiles. To limit config settings to a specific profile:
 
 ```
 firefox config --profile --mount <hostpath>:<containerpath>
