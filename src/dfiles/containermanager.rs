@@ -5,6 +5,7 @@ use std::io::{BufRead, BufReader, Write};
 
 use clap::{App, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
+use dyn_clone;
 use serde::Deserialize;
 use serde_json::from_str;
 use tar::{Builder, Header};
@@ -49,16 +50,10 @@ impl ContainerManager {
         self.tags[0].clone()
     }
 
-    fn run<'a>(&self, matches: &'a ArgMatches<'a>) -> Result<(), anyhow::Error> {
+    fn run(&self, matches: &ArgMatches) -> Result<(), anyhow::Error> {
         let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
 
         for aspect in &self.aspects {
-            println!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches))?);
-        }
-
-        let config_aspects = self.load_config(matches)?;
-        for aspect in &config_aspects {
             println!("{:}", aspect);
             args.extend(aspect.run_args(Some(&matches))?);
         }
@@ -150,10 +145,7 @@ impl ContainerManager {
         cfg.save(Some(&self.name), profile)
     }
 
-    fn load_config(
-        &self,
-        matches: &ArgMatches,
-    ) -> Result<Vec<Box<dyn aspects::ContainerAspect>>, anyhow::Error> {
+    fn load_config(&mut self, matches: &ArgMatches) -> Result<(), anyhow::Error> {
         let mut profile: Option<&str> = None;
         if matches.occurrences_of("profile") > 0 {
             profile = matches.value_of("profile");
@@ -162,7 +154,9 @@ impl ContainerManager {
 
         let cli_cfg = config::Config::try_from(matches)?;
 
-        Ok(cfg.merge(&cli_cfg, false).get_aspects())
+        self.aspects
+            .extend(cfg.merge(&cli_cfg, false).get_aspects());
+        Ok(())
     }
 
     pub fn execute(&mut self) -> Result<(), anyhow::Error> {
@@ -187,7 +181,8 @@ impl ContainerManager {
             config = config.arg(arg);
         }
 
-        for aspect in &self.aspects {
+        let cloned = dyn_clone::clone_box(&self.aspects);
+        for aspect in cloned.iter() {
             for arg in aspect.config_args() {
                 run = run.arg(arg);
             }
@@ -206,8 +201,13 @@ impl ContainerManager {
             .subcommand(generate_archive);
 
         let matches = app.get_matches();
+        let (subc, subm) = matches.subcommand();
 
-        match matches.subcommand() {
+        if let Some(v) = subm {
+            self.load_config(&v)?;
+        }
+
+        match (subc, subm) {
             ("run", Some(subm)) => self.run(&subm),
             ("build", _) => self.build(),
             ("config", Some(subm)) => self.config(&subm),
@@ -229,6 +229,7 @@ fn add_file_to_archive<W: Write>(
     b.append(&header, contents.as_bytes())
 }
 
+#[derive(Clone)]
 struct Debian {}
 
 impl aspects::ContainerAspect for Debian {

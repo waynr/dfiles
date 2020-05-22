@@ -5,6 +5,7 @@ use std::{env, fs};
 
 use anyhow::Result;
 use clap::{Arg, ArgMatches};
+use dyn_clone;
 use serde::{Deserialize, Serialize};
 use thiserror;
 use users;
@@ -36,7 +37,7 @@ pub struct ContainerFile {
     pub contents: String,
 }
 
-pub trait ContainerAspect {
+pub trait ContainerAspect: dyn_clone::DynClone {
     fn name(&self) -> String;
     fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         Ok(Vec::new())
@@ -55,6 +56,8 @@ pub trait ContainerAspect {
     }
 }
 
+dyn_clone::clone_trait_object!(ContainerAspect);
+
 impl fmt::Display for dyn ContainerAspect {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -66,6 +69,7 @@ impl fmt::Display for dyn ContainerAspect {
     }
 }
 
+#[derive(Clone)]
 pub struct PulseAudio {}
 impl ContainerAspect for PulseAudio {
     fn name(&self) -> String {
@@ -130,6 +134,7 @@ enable-shm = false
     }
 }
 
+#[derive(Clone)]
 pub struct Alsa {}
 impl ContainerAspect for Alsa {
     fn name(&self) -> String {
@@ -143,6 +148,7 @@ impl ContainerAspect for Alsa {
     }
 }
 
+#[derive(Clone)]
 pub struct X11 {}
 impl ContainerAspect for X11 {
     fn name(&self) -> String {
@@ -165,6 +171,7 @@ impl ContainerAspect for X11 {
     }
 }
 
+#[derive(Clone)]
 pub struct Video {}
 impl ContainerAspect for Video {
     fn name(&self) -> String {
@@ -193,6 +200,7 @@ impl ContainerAspect for Video {
     }
 }
 
+#[derive(Clone)]
 pub struct DBus {}
 impl ContainerAspect for DBus {
     fn name(&self) -> String {
@@ -257,6 +265,7 @@ impl TryFrom<&str> for Network {
     }
 }
 
+#[derive(Clone)]
 pub struct SysAdmin {}
 impl ContainerAspect for SysAdmin {
     fn name(&self) -> String {
@@ -270,6 +279,7 @@ impl ContainerAspect for SysAdmin {
     }
 }
 
+#[derive(Clone)]
 pub struct TTY {}
 impl ContainerAspect for TTY {
     fn name(&self) -> String {
@@ -280,6 +290,7 @@ impl ContainerAspect for TTY {
     }
 }
 
+#[derive(Clone)]
 pub struct Shm {}
 impl ContainerAspect for Shm {
     fn name(&self) -> String {
@@ -335,6 +346,7 @@ impl TryFrom<&str> for Memory {
     }
 }
 
+#[derive(Clone)]
 pub struct Profile {
     pub name: String,
     pub container_paths: Vec<String>,
@@ -415,6 +427,7 @@ impl TryFrom<&str> for Mount {
     }
 }
 
+#[derive(Clone)]
 pub struct Name(pub String);
 impl ContainerAspect for Name {
     fn name(&self) -> String {
@@ -446,6 +459,7 @@ impl ContainerAspect for Name {
     }
 }
 
+#[derive(Clone)]
 pub struct CurrentUser {
     name: String,
     uid: String,

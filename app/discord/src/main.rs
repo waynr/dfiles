@@ -5,6 +5,7 @@ use anyhow::{Context, Result};
 use dfiles::aspects;
 use dfiles::containermanager::ContainerManager;
 
+#[derive(Clone)]
 struct Discord {}
 
 impl aspects::ContainerAspect for Discord {
