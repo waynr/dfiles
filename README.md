@@ -124,7 +124,7 @@ firefox config --profile --mount <hostpath>:<containerpath>
     * [ ] CurrentUser
       * should take configurable mode to facilitate choice of userns vs
       entrypoint
-  * [ ] Replace buildtime user setup with entrypoint script user setup.
+      * [ ] Replace buildtime user setup with entrypoint script user setup.
   * [ ] Improve README.
   * [ ] Implement some kind of automated image build and push.
   * [x] Replace all `unwrap` and `Box<dyn Error>` instances with better error
