@@ -120,7 +120,7 @@ firefox config --profile --mount <hostpath>:<containerpath>
     * [x] CPU shares
     * [x] Memory
     * [x] Network mode
-    * [ ] Locale
+    * [x] Locale
     * [ ] CurrentUser
       * should take configurable mode to facilitate choice of userns vs
       entrypoint
