@@ -56,7 +56,7 @@ fn main() -> Result<()> {
             Box::new(Firefox {}),
             Box::new(aspects::Name("firefox".to_string())),
             Box::new(
-                aspects::CurrentUser::detect(aspects::CurrentUserMode::Builtin)
+                aspects::CurrentUser::detect(aspects::CurrentUserMode::Entrypoint)
                     .context("detecting current user")?,
             ),
             Box::new(aspects::PulseAudio {}),

@@ -12,6 +12,7 @@ use serde::Deserialize;
 use serde_json::from_str;
 use tar::{Builder, Header};
 use tempfile::NamedTempFile;
+use which::which;
 
 use super::aspects;
 use super::config;
@@ -257,11 +258,23 @@ impl ContainerManager {
         Ok(())
     }
 
+    fn entrypoint(&self) -> Result<()> {
+        let sudo_path = which("sudo")?;
+        for aspect in &self.aspects {
+            for ep_fn in aspect.entrypoint_fns() {
+                println!("{:}: {}", aspect.name(), ep_fn.description);
+                (ep_fn.func)()?;
+            }
+        }
+        Ok(())
+    }
+
     pub fn execute(&mut self) -> Result<()> {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut cmd = SubCommand::with_name("cmd").about("run specified command in container");
         let mut build = SubCommand::with_name("build").about("build app container");
         let mut config = SubCommand::with_name("config").about("configure app container settings");
+        let entrypoint = SubCommand::with_name("entrypoint").about("entrypoint mode");
         let generate_archive = SubCommand::with_name("generate-archive")
             .about("generate archive used to build container");
 
@@ -333,6 +346,7 @@ impl ContainerManager {
             .subcommand(cmd)
             .subcommand(build)
             .subcommand(config)
+            .subcommand(entrypoint)
             .subcommand(generate_archive);
 
         let matches = app.get_matches();
@@ -347,6 +361,7 @@ impl ContainerManager {
             ("cmd", Some(subm)) => self.cmd(&subm),
             ("build", _) => self.build(),
             ("config", Some(subm)) => self.config(&subm),
+            ("entrypoint", _) => self.entrypoint(),
             ("generate-archive", _) => self.generate_archive(),
             (_, _) => Ok(println!("{}", matches.usage())),
         }

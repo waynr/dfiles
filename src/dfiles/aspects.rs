@@ -21,6 +21,12 @@ pub struct ContainerFile {
     pub contents: Vec<u8>,
 }
 
+pub struct EntrypointFn {
+    pub description: String,
+    pub sudo_args: Vec<String>,
+    pub func: Box<dyn Fn() -> Result<()>>,
+}
+
 pub trait ContainerAspect: dyn_clone::DynClone {
     fn name(&self) -> String;
     fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
@@ -36,6 +42,9 @@ pub trait ContainerAspect: dyn_clone::DynClone {
         Vec::new()
     }
     fn container_files(&self) -> Vec<ContainerFile> {
+        Vec::new()
+    }
+    fn entrypoint_fns(&self) -> Vec<EntrypointFn> {
         Vec::new()
     }
 }
@@ -477,6 +486,17 @@ impl ContainerAspect for Name {
 #[derive(Clone)]
 pub enum CurrentUserMode {
     Builtin,
+    Entrypoint,
+}
+
+impl fmt::Display for CurrentUserMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match &self {
+            CurrentUserMode::Builtin => "builtin",
+            CurrentUserMode::Entrypoint => "entrypoint",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Clone)]
@@ -516,9 +536,14 @@ impl CurrentUser {
 
 impl ContainerAspect for CurrentUser {
     fn name(&self) -> String {
-        format!("User: {}", &self.name)
+        format!("User<{}>: {}", &self.mode, &self.name)
     }
+
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        match self.mode {
+            CurrentUserMode::Builtin => (),
+            _ => return Vec::new(),
+        }
         vec![
             DockerfileSnippet {
                 order: 80,
@@ -551,6 +576,18 @@ WORKDIR /home/{user}
                 ),
             },
         ]
+    }
+
+    fn entrypoint_fns(&self) -> Vec<EntrypointFn> {
+        match self.mode {
+            CurrentUserMode::Entrypoint => (),
+            _ => return Vec::new(),
+        }
+        vec![EntrypointFn {
+            description: format!("create a user named {}", self.name),
+            sudo_args: vec![],
+            func: Box::new(|| Ok(())),
+        }]
     }
 }
 
