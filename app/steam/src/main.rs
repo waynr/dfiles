@@ -43,7 +43,10 @@ fn main() -> Result<()> {
         vec![
             Box::new(Steam {}),
             Box::new(aspects::Name("steam".to_string())),
-            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
+            Box::new(
+                aspects::CurrentUser::detect(aspects::CurrentUserMode::Builtin)
+                    .context("detecting current user")?,
+            ),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::Alsa {}),
             Box::new(aspects::X11 {}),

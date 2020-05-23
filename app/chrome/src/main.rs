@@ -105,7 +105,10 @@ fn main() -> Result<()> {
         vec![
             Box::new(Chrome {}),
             Box::new(aspects::Name("chrome".to_string())),
-            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
+            Box::new(
+                aspects::CurrentUser::detect(aspects::CurrentUserMode::Builtin)
+                    .context("detecting current user")?,
+            ),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
