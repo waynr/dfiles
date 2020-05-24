@@ -585,7 +585,7 @@ WORKDIR /home/{user}
         }
         vec![EntrypointFn {
             description: format!("create a user named {}", self.name),
-            sudo_args: vec![],
+            sudo_args: vec!["--user".to_string(), format!("{}", self.name)],
             func: Box::new(|| Ok(())),
         }]
     }

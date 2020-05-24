@@ -1,5 +1,6 @@
 use dockworker;
 use thiserror;
+use which;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -7,6 +8,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("not in entrypoint mode")]
     NotInEntrypointMode,
+
+    #[error("missing entrypoint args")]
+    MissingEntrypointArgs,
 
     #[error("could not find current binary")]
     CouldNotFindCurrentBinary(#[from] std::io::Error),
@@ -52,4 +56,7 @@ pub enum Error {
 
     #[error("local entrypoint path must be absolute")]
     LocalEntrypointPathMustBeAbsolute,
+
+    #[error("failed to find binary")]
+    WhichError(#[from] which::Error),
 }
