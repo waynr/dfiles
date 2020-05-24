@@ -271,7 +271,7 @@ impl ContainerManager {
         Ok(())
     }
 
-    fn entrypoint(&self, matches: &ArgMatches) -> Result<()> {
+    fn entrypoint(&self, args: Vec<String>) -> Result<()> {
         let sudo_path = which("sudo")?;
         let mut sudo_args = Vec::new();
         for aspect in &self.aspects {
@@ -282,39 +282,36 @@ impl ContainerManager {
             }
         }
 
-        if let Some(args) = matches.values_of("command") {
-            println!("{:?}", args);
-            process::Command::new(sudo_path)
-                .args(sudo_args)
-                .arg("--")
-                .args(args)
-                .status()?;
-            Ok(())
-        } else {
-            Err(Error::MissingEntrypointArgs)
+        if args.len() < 2 {
+            return Err(Error::MissingEntrypointArgs);
         }
+
+        println!("entrypoint: running {:?}", &args[1..]);
+        process::Command::new(sudo_path)
+            .args(sudo_args)
+            .arg("--")
+            .args(&args[1..])
+            .status()?;
+        Ok(())
     }
 
     pub fn execute(&mut self) -> Result<()> {
-        let entrypoint_arg = Arg::with_name("command").multiple(true).required(true);
-
         // note: since we want to use this binary as an entrypoint "script" in a docker container,
         // it has to be callable without using subcommands so the first thing we do is check if
-        // that's how it was called and act accordingly
-        let entrypoint_cmd = App::new("entrypoint")
-            .about("entrypoint mode")
-            .arg(entrypoint_arg.clone());
-
+        // that's how it was called and skip all clap setup if so, moving straight to entrypoint
+        // execution. this works because we can't meaningfully parse entrypoint arguments anyway
+        // since they vary depending on the command that was passed to `docker run`.
         let binary = std::env::current_exe()?;
         println!("{:?}", binary);
         if binary == PathBuf::from("/entrypoint") {
             println!("wtf mate");
-            let matches = entrypoint_cmd.get_matches();
-            // note for tomorrow: probably need to skip over clap usage entirely to avoid clap
-            // attempting to claim options meant for the command being executed by docker
-            return self.entrypoint(&matches);
+            let args = std::env::args().into_iter().map(String::from).collect();
+            return self.entrypoint(args);
         }
+        self.execute_clap()
+    }
 
+    fn execute_clap(&mut self) -> Result<()> {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut cmd = SubCommand::with_name("cmd").about("run specified command in container");
         let mut build = SubCommand::with_name("build").about("build app container");
@@ -324,7 +321,7 @@ impl ContainerManager {
 
         let entrypoint = SubCommand::with_name("entrypoint")
             .about("entrypoint test mode")
-            .arg(entrypoint_arg);
+            .arg(Arg::with_name("command").multiple(true).required(true));
 
         let mut app = App::new(&self.name).version("0.0");
 
@@ -408,7 +405,13 @@ impl ContainerManager {
             ("cmd", Some(subm)) => self.cmd(&subm),
             ("build", _) => self.build(),
             ("config", Some(subm)) => self.config(&subm),
-            ("entrypoint", Some(subm)) => self.entrypoint(&subm),
+            ("entrypoint", Some(subm)) => {
+                if let Some(args) = subm.values_of("command") {
+                    self.entrypoint(args.into_iter().map(String::from).collect())
+                } else {
+                    Err(Error::MissingEntrypointArgs)
+                }
+            }
             ("generate-archive", _) => self.generate_archive(),
             (_, _) => Ok(println!("{}", matches.usage())),
         }
@@ -474,6 +477,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     lsof \
     procps \
+    sudo \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,
