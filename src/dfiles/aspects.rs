@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use users;
 
 use super::dirs;
+use super::entrypoint;
 use super::error::{Error, Result};
 
 pub struct DockerfileSnippet {
@@ -19,12 +20,6 @@ pub struct DockerfileSnippet {
 pub struct ContainerFile {
     pub container_path: String,
     pub contents: Vec<u8>,
-}
-
-pub struct EntrypointFn {
-    pub description: String,
-    pub sudo_args: Vec<String>,
-    pub func: Box<dyn Fn() -> Result<()>>,
 }
 
 pub trait ContainerAspect: dyn_clone::DynClone {
@@ -44,7 +39,7 @@ pub trait ContainerAspect: dyn_clone::DynClone {
     fn container_files(&self) -> Vec<ContainerFile> {
         Vec::new()
     }
-    fn entrypoint_fns(&self) -> Vec<EntrypointFn> {
+    fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
         Vec::new()
     }
 }
@@ -578,15 +573,15 @@ WORKDIR /home/{user}
         ]
     }
 
-    fn entrypoint_fns(&self) -> Vec<EntrypointFn> {
+    fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
         match self.mode {
             CurrentUserMode::Entrypoint => (),
             _ => return Vec::new(),
         }
-        vec![EntrypointFn {
+        vec![entrypoint::Script {
             description: format!("create a user named {}", self.name),
             sudo_args: vec!["--user".to_string(), format!("{}", self.name)],
-            func: Box::new(|| Ok(())),
+            script: String::new(),
         }]
     }
 }
