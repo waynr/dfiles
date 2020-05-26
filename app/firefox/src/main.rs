@@ -71,5 +71,5 @@ fn main() -> Result<()> {
         .collect(),
     );
 
-    mgr.execute()
+    mgr.execute().context("executing firefox in container")
 }

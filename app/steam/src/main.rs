@@ -57,5 +57,5 @@ fn main() -> Result<()> {
             .collect(),
     );
 
-    mgr.execute()
+    mgr.execute().context("executing steam in container")
 }

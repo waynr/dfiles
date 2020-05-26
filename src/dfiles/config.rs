@@ -2,12 +2,12 @@ use std::convert::TryFrom;
 use std::fs;
 use std::io::Write;
 
-use anyhow::Result;
 use clap::{Arg, ArgMatches};
 use serde::{Deserialize, Serialize};
 
 use super::aspects;
 use super::dirs;
+use super::error::{Error, Result};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
@@ -41,7 +41,7 @@ impl Config {
         let path = config_dir.join("config.yaml");
         let mut config_file = fs::File::create(path)?;
 
-        let s = serde_yaml::to_string(&merged)?;
+        let s = serde_yaml::to_string(&merged).map_err(|_| Error::FailedToSaveConfig)?;
         config_file.write_all(&s.into_bytes())?;
 
         Ok(())
@@ -49,10 +49,7 @@ impl Config {
 
     /// Loads a single config file specified by the combination of application and profile options;
     /// if both are none, then loads the global config.
-    fn load_layer(
-        application: Option<&str>,
-        profile: Option<&str>,
-    ) -> Result<Config, anyhow::Error> {
+    fn load_layer(application: Option<&str>, profile: Option<&str>) -> Result<Config> {
         let config_dir = dirs::get_config_dir(application, profile)?;
         let yaml_file = config_dir.join("config.yaml");
 
@@ -60,13 +57,13 @@ impl Config {
 
         if yaml_file.exists() {
             let yaml = fs::read_to_string(yaml_file)?;
-            cfg = serde_yaml::from_str(&yaml)?;
+            cfg = serde_yaml::from_str(&yaml).map_err(|_| Error::FailedToLoadConfig)?;
         }
 
         Ok(cfg)
     }
 
-    pub fn load(application: &str, profile: Option<&str>) -> Result<Config, anyhow::Error> {
+    pub fn load(application: &str, profile: Option<&str>) -> Result<Config> {
         // load dfiles global config if it exists
         let global_config = Config::load_layer(None, None)?;
         // load application global config if it exists
@@ -141,8 +138,8 @@ impl Config {
 }
 
 impl TryFrom<&ArgMatches<'_>> for Config {
-    type Error = anyhow::Error;
-    fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(matches: &ArgMatches) -> Result<Self> {
         let mut cfg = Config::empty();
 
         if let Some(vs) = matches.values_of("mount") {

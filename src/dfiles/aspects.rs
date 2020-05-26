@@ -3,29 +3,13 @@ use std::fmt;
 use std::path::Path;
 use std::{env, fs};
 
-use anyhow::Result;
 use clap::{Arg, ArgMatches};
 use dyn_clone;
 use serde::{Deserialize, Serialize};
-use thiserror;
 use users;
 
 use super::dirs;
-
-#[derive(thiserror::Error, Debug)]
-pub enum AspectError {
-    #[error("could not identify user with uid `{0:?}`")]
-    MissingUser(String),
-
-    #[error("could not identify user with gid `{0:?}`")]
-    MissingGroup(String),
-
-    #[error("invalid mount string `{0:?}`")]
-    InvalidMount(String),
-
-    #[error("invalide locale `{0:?}`")]
-    InvalidLocale(String),
-}
+use super::error::{Error, Result};
 
 pub struct DockerfileSnippet {
     pub order: u8,
@@ -180,7 +164,7 @@ impl ContainerAspect for Video {
     fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         let video_devices: Vec<String> = fs::read_dir(Path::new("/dev"))
             .expect("get entries for dir")
-            .filter_map(Result::ok)
+            .filter_map(std::result::Result::ok)
             .filter(|entry| match entry.path().file_name() {
                 Some(x) => match x.to_os_string().into_string() {
                     Ok(x) => x.starts_with(&"video"),
@@ -189,7 +173,7 @@ impl ContainerAspect for Video {
                 None => false,
             })
             .map(|e| e.path().as_os_str().to_os_string().into_string())
-            .filter_map(Result::ok)
+            .filter_map(std::result::Result::ok)
             .collect();
 
         Ok(video_devices
@@ -257,8 +241,8 @@ impl ContainerAspect for Network {
 }
 
 impl TryFrom<&str> for Network {
-    type Error = std::io::Error;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: &str) -> Result<Self> {
         Ok(Network {
             mode: value.to_string(),
         })
@@ -319,8 +303,8 @@ impl ContainerAspect for CPUShares {
 }
 
 impl TryFrom<&str> for CPUShares {
-    type Error = anyhow::Error;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: &str) -> Result<Self> {
         Ok(CPUShares(value.to_string()))
     }
 }
@@ -340,8 +324,8 @@ impl ContainerAspect for Memory {
 }
 
 impl TryFrom<&str> for Memory {
-    type Error = anyhow::Error;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: &str) -> Result<Self> {
         Ok(Memory(value.to_string()))
     }
 }
@@ -414,11 +398,11 @@ impl ContainerAspect for Mount {
 }
 
 impl TryFrom<&str> for Mount {
-    type Error = AspectError;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: &str) -> Result<Self> {
         let vs: Vec<&str> = value.split(':').collect();
         if vs.len() != 2 {
-            return Err(AspectError::InvalidMount(value.to_string()));
+            return Err(Error::InvalidMount(value.to_string()));
         }
         Ok(Mount {
             host_path: vs[0].to_string(),
@@ -468,16 +452,16 @@ pub struct CurrentUser {
 }
 
 impl CurrentUser {
-    pub fn detect() -> Result<Self, AspectError> {
+    pub fn detect() -> Result<Self> {
         let uid = users::get_current_uid();
         let gid = users::get_current_gid();
         let name = match users::get_user_by_uid(uid) {
             Some(n) => n.name().to_string_lossy().to_string(),
-            None => return Err(AspectError::MissingUser(uid.to_string())),
+            None => return Err(Error::MissingUser(uid.to_string())),
         };
         let group = match users::get_user_by_uid(gid) {
             Some(g) => g.name().to_string_lossy().to_string(),
-            None => return Err(AspectError::MissingGroup(gid.to_string())),
+            None => return Err(Error::MissingGroup(gid.to_string())),
         };
         Ok(CurrentUser {
             name: name,
@@ -554,8 +538,8 @@ ENV LANG={locale}"#,
 }
 
 impl TryFrom<&str> for Locale {
-    type Error = AspectError;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: &str) -> Result<Self> {
         let mut locale = Locale {
             language: String::new(),
             territory: String::new(),
@@ -569,7 +553,7 @@ impl TryFrom<&str> for Locale {
             let (_, right) = right.split_at(1);
             remainder = right.to_string();
         } else {
-            return Err(AspectError::InvalidLocale(value.to_string()));
+            return Err(Error::InvalidLocale(value.to_string()));
         }
 
         if let Some(i) = remainder.find('.') {
@@ -578,7 +562,7 @@ impl TryFrom<&str> for Locale {
             let (_, right) = right.split_at(1);
             locale.codeset = right.to_string();
         } else {
-            return Err(AspectError::InvalidLocale(value.to_string()));
+            return Err(Error::InvalidLocale(value.to_string()));
         }
         Ok(locale)
     }
@@ -589,7 +573,7 @@ mod locale_should {
     use super::*;
 
     #[test]
-    fn convert_from_str() -> Result<(), AspectError> {
+    fn convert_from_str() -> Result<()> {
         assert_eq!(
             Locale::try_from("en_US.UTF-8")?,
             Locale {
@@ -624,8 +608,8 @@ RUN echo {tz} > /etc/timezone
 }
 
 impl TryFrom<&str> for Timezone {
-    type Error = std::io::Error;
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    type Error = Error;
+    fn try_from(value: &str) -> Result<Self> {
         let _ = tzdata::Timezone::new(value)?;
         Ok(Timezone(value.to_string()))
     }

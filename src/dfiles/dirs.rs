@@ -1,14 +1,8 @@
 use std::path::PathBuf;
 
-use anyhow::Result;
 use directories_next::ProjectDirs;
-use thiserror::Error;
 
-#[derive(Error, Debug)]
-enum DirError {
-    #[error("could not identify directory")]
-    MissingDirectory,
-}
+use super::error::{Error, Result};
 
 enum DirType {
     Config,
@@ -40,6 +34,6 @@ fn get_dir(dir_type: DirType, application: Option<&str>, profile: Option<&str>) 
 
         Ok(dir)
     } else {
-        Err(DirError::MissingDirectory.into())
+        Err(Error::MissingDirectory)
     }
 }

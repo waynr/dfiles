@@ -114,5 +114,5 @@ fn main() -> Result<()> {
             .collect(),
     );
 
-    mgr.execute()
+    mgr.execute().context("executing chrome in container")
 }
