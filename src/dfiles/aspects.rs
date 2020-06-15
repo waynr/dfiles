@@ -500,7 +500,10 @@ RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
             },
             DockerfileSnippet {
                 order: 98,
-                content: format!("USER {}", &self.name),
+                content: format!(r#"USER {user}
+WORKDIR /home/{user}
+"#,
+                    user = &self.name),
             },
         ]
     }
