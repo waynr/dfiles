@@ -22,7 +22,7 @@ impl aspects::ContainerAspect for Firefox {
 ADD https://archive.mozilla.org/pub/firefox/releases/{release}/linux-x86_64/en-US/firefox-{release}.tar.bz2 ./
 RUN tar -xjvf /opt/firefox-{release}.tar.bz2
 RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
-                    release = "77.0.1"
+                    release = "79.0"
                 ),
             },
             aspects::DockerfileSnippet {
