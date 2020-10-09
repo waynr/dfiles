@@ -37,7 +37,10 @@ fn main() -> Result<()> {
     let mut mgr = ContainerManager::default_debian(
         "zoom".to_string(),
         vec![format!("{}:{}", "waynr/zoom", version)],
-        vec![format!("{}/.zoom/", home), format!("{}/.config/zoomus.conf", home), ],
+        vec![
+            format!("{}/.zoom/", home),
+            format!("{}/.config/zoomus.conf", home),
+        ],
         vec![
             Box::new(Zoom {}),
             Box::new(aspects::Name("zoom".to_string())),
