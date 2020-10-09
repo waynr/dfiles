@@ -31,6 +31,7 @@ RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
                     r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     firefox-esr \
+    libxt6 \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,
