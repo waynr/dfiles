@@ -69,6 +69,7 @@ fn main() -> Result<()> {
         .into_iter()
         .map(String::from)
         .collect(),
+        Some(String::from("bullseye")),
     );
 
     mgr.execute().context("executing firefox in container")

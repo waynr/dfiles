@@ -51,6 +51,7 @@ fn main() -> Result<()> {
             Box::new(aspects::Shm {}),
         ],
         vec!["discord"].into_iter().map(String::from).collect(),
+        None,
     );
 
     mgr.execute().context("executing discord in container")

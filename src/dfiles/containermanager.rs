@@ -36,8 +36,13 @@ impl ContainerManager {
         container_paths: Vec<String>,
         mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
         args: Vec<String>,
+        version: Option<String>,
     ) -> ContainerManager {
-        aspects.insert(0, Box::new(Debian {}));
+        let aspect = match version {
+            None => String::from("buster"),
+            Some(s) => s,
+        };
+        aspects.insert(0, Box::new(Debian { version: aspect }));
         ContainerManager {
             name: name,
             tags: tags,
@@ -230,7 +235,9 @@ fn add_file_to_archive<W: Write>(b: &mut Builder<W>, name: &str, contents: &str)
 }
 
 #[derive(Clone)]
-struct Debian {}
+struct Debian {
+    pub version: String,
+}
 
 impl aspects::ContainerAspect for Debian {
     fn name(&self) -> String {
@@ -240,7 +247,7 @@ impl aspects::ContainerAspect for Debian {
         vec![
             aspects::DockerfileSnippet {
                 order: 00,
-                content: String::from("FROM debian:buster"),
+                content: format!("FROM debian:{}", self.version),
             },
             aspects::DockerfileSnippet {
                 order: 3,

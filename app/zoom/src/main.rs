@@ -50,6 +50,7 @@ fn main() -> Result<()> {
             Box::new(aspects::Shm {}),
         ],
         vec!["zoom"].into_iter().map(String::from).collect(),
+        None,
     );
 
     mgr.execute().context("executing zoom in container")

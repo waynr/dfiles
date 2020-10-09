@@ -60,6 +60,7 @@ fn main() -> Result<()> {
             .into_iter()
             .map(String::from)
             .collect(),
+        None,
     );
 
     mgr.execute().context("executing signal in container")
