@@ -12,6 +12,7 @@ members = [
   "app/signal",
   "app/skype",
   "app/steam",
+  "app/thinkorswim",
   "app/zoom",
 ]
 
