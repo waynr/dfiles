@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
-use clap::{App, ArgMatches, SubCommand};
+use clap::{App, Arg, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
 use dyn_clone;
 use serde::Deserialize;
@@ -66,6 +66,29 @@ impl ContainerManager {
 
         args.push(self.image().to_string());
         args.extend_from_slice(&self.args);
+        docker::run(args);
+        Ok(())
+    }
+
+    fn cmd(&self, matches: &ArgMatches) -> Result<()> {
+        let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
+
+        for aspect in &self.aspects {
+            println!("{:}", aspect);
+            args.extend(aspect.run_args(Some(&matches))?);
+        }
+
+        let command: Vec<String> = match matches.values_of("command") {
+            None => vec!["/bin/bash".to_string()],
+            Some(s) => s.map(|s| s.to_string()).collect(),
+        };
+
+        if let Some(c) = matches.value_of("entrypoint") {
+            args.extend_from_slice(&["--entrypoint".to_string(), c.to_string()]);
+        }
+
+        args.push(self.image().to_string());
+        args.extend_from_slice(command.as_slice());
         docker::run(args);
         Ok(())
     }
@@ -167,6 +190,7 @@ impl ContainerManager {
 
     pub fn execute(&mut self) -> Result<()> {
         let mut run = SubCommand::with_name("run").about("run app in container");
+        let mut cmd = SubCommand::with_name("cmd").about("run specified command in container");
         let mut build = SubCommand::with_name("build").about("build app container");
         let mut config = SubCommand::with_name("config").about("configure app container settings");
         let generate_archive = SubCommand::with_name("generate-archive")
@@ -184,13 +208,34 @@ impl ContainerManager {
 
         for arg in &config::cli_args() {
             run = run.arg(arg);
+            cmd = cmd.arg(arg);
             config = config.arg(arg);
         }
+
+        cmd = cmd.arg(
+            Arg::with_name("entrypoint")
+                .takes_value(true)
+                .short("e")
+                .long("entrypoint")
+                .help("specify the entrypoint command of the container"),
+        );
+
+        cmd = cmd.arg(
+            Arg::with_name("command")
+                .takes_value(true)
+                .last(true)
+                .required(true)
+                .multiple(true)
+                .help("command to run instead of default"),
+        );
 
         let cloned = dyn_clone::clone_box(&self.aspects);
         for aspect in cloned.iter() {
             for arg in aspect.config_args() {
                 run = run.arg(arg);
+            }
+            for arg in aspect.config_args() {
+                cmd = cmd.arg(arg);
             }
             for arg in aspect.cli_build_args() {
                 build = build.arg(arg);
@@ -202,6 +247,7 @@ impl ContainerManager {
 
         app = app
             .subcommand(run)
+            .subcommand(cmd)
             .subcommand(build)
             .subcommand(config)
             .subcommand(generate_archive);
@@ -215,6 +261,7 @@ impl ContainerManager {
 
         match (subc, subm) {
             ("run", Some(subm)) => self.run(&subm),
+            ("cmd", Some(subm)) => self.cmd(&subm),
             ("build", _) => self.build(),
             ("config", Some(subm)) => self.config(&subm),
             ("generate-archive", _) => self.generate_archive(),
