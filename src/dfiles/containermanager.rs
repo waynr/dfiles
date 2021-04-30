@@ -2,6 +2,8 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
+use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
@@ -85,6 +87,38 @@ impl ContainerManager {
 
         if let Some(c) = matches.value_of("entrypoint") {
             args.extend_from_slice(&["--entrypoint".to_string(), c.to_string()]);
+        }
+
+        if let Some(s) = matches.value_of("local-entrypoint") {
+            // check if local_path exists and meets all the requirements of an entrypoint script
+            let local_path = Path::new(s);
+
+            if !local_path.is_absolute() {
+                return Err(Error::LocalEntrypointPathMustBeAbsolute);
+            }
+
+            if !local_path.exists() {
+                return Err(Error::LocalEntrypointPathMustExist);
+            }
+
+            if !local_path.is_file() {
+                return Err(Error::LocalEntrypointPathMustBeARegularFile);
+            }
+
+            let mode = local_path.metadata()?.permissions().mode();
+
+            if mode & 0o500 != 0o500 {
+                return Err(Error::LocalEntrypointPathMustBeExecutable);
+            }
+
+            // construct entrypoint-related arguments
+            let container_path = "/entrypoint.sh";
+            args.extend_from_slice(&[
+                "-v".to_string(),
+                format!("{}:{}", s, container_path).to_string(),
+                "--entrypoint".to_string(),
+                container_path.to_string(),
+            ]);
         }
 
         args.push(self.image().to_string());
@@ -217,6 +251,14 @@ impl ContainerManager {
                 .takes_value(true)
                 .short("e")
                 .long("entrypoint")
+                .help("specify the entrypoint command of the container"),
+        );
+
+        cmd = cmd.arg(
+            Arg::with_name("local-entrypoint")
+                .takes_value(true)
+                .conflicts_with("entrypoint")
+                .long("local-entrypoint")
                 .help("specify the entrypoint command of the container"),
         );
 
