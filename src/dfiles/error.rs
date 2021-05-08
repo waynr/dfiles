@@ -37,4 +37,16 @@ pub enum Error {
 
     #[error("failed to load config from file")]
     FailedToLoadConfig,
+
+    #[error("local entrypoint path must exist")]
+    LocalEntrypointPathMustExist,
+
+    #[error("local entrypoint path must be a regular file")]
+    LocalEntrypointPathMustBeARegularFile,
+
+    #[error("local entyrpoint path must be executable")]
+    LocalEntrypointPathMustBeExecutable,
+
+    #[error("local entrypoint path must be absolute")]
+    LocalEntrypointPathMustBeAbsolute,
 }
