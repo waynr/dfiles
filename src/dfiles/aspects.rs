@@ -452,6 +452,10 @@ pub struct CurrentUser {
 }
 
 impl CurrentUser {
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
     pub fn detect() -> Result<Self> {
         let uid = users::get_current_uid();
         let gid = users::get_current_gid();
