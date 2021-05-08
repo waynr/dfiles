@@ -58,32 +58,8 @@ impl ContainerManager {
         self.tags[0].clone()
     }
 
-    fn run(&self, matches: &ArgMatches) -> Result<()> {
-        let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
-
-        for aspect in &self.aspects {
-            println!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches))?);
-        }
-
-        args.push(self.image().to_string());
-        args.extend_from_slice(&self.args);
-        docker::run(args);
-        Ok(())
-    }
-
-    fn cmd(&self, matches: &ArgMatches) -> Result<()> {
+    fn entrypoint_args(&self, matches: &ArgMatches) -> Result<Vec<String>> {
         let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
-
-        for aspect in &self.aspects {
-            println!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches))?);
-        }
-
-        let command: Vec<String> = match matches.values_of("command") {
-            None => vec!["/bin/bash".to_string()],
-            Some(s) => s.map(|s| s.to_string()).collect(),
-        };
 
         if let Some(c) = matches.value_of("entrypoint") {
             args.extend_from_slice(&["--entrypoint".to_string(), c.to_string()]);
@@ -121,8 +97,45 @@ impl ContainerManager {
             ]);
         }
 
+        Ok(args)
+    }
+
+    fn run(&self, matches: &ArgMatches) -> Result<()> {
+        let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
+
+        for aspect in &self.aspects {
+            println!("{:}", aspect);
+            args.extend(aspect.run_args(Some(&matches))?);
+        }
+
+        let entrypoint_args = self.entrypoint_args(matches)?;
+
+        args.extend_from_slice(&entrypoint_args);
+        args.push(self.image().to_string());
+        args.extend_from_slice(&self.args);
+        docker::run(args);
+        Ok(())
+    }
+
+    fn cmd(&self, matches: &ArgMatches) -> Result<()> {
+        let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
+
+        for aspect in &self.aspects {
+            println!("{:}", aspect);
+            args.extend(aspect.run_args(Some(&matches))?);
+        }
+
+        let command: Vec<String> = match matches.values_of("command") {
+            None => vec!["/bin/bash".to_string()],
+            Some(s) => s.map(|s| s.to_string()).collect(),
+        };
+
+        let entrypoint_args = self.entrypoint_args(matches)?;
+
+        args.extend_from_slice(&entrypoint_args);
         args.push(self.image().to_string());
         args.extend_from_slice(command.as_slice());
+
         docker::run(args);
         Ok(())
     }
@@ -246,21 +259,27 @@ impl ContainerManager {
             config = config.arg(arg);
         }
 
-        cmd = cmd.arg(
+        let ep_args = vec![
             Arg::with_name("entrypoint")
                 .takes_value(true)
                 .short("e")
                 .long("entrypoint")
                 .help("specify the entrypoint command of the container"),
-        );
 
-        cmd = cmd.arg(
             Arg::with_name("local-entrypoint")
                 .takes_value(true)
                 .conflicts_with("entrypoint")
                 .long("local-entrypoint")
                 .help("specify the entrypoint command of the container"),
-        );
+        ];
+
+        for arg in ep_args.clone() {
+            cmd = cmd.arg(arg);
+        }
+
+        for arg in ep_args {
+            run = run.arg(arg);
+        }
 
         cmd = cmd.arg(
             Arg::with_name("command")
