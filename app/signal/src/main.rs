@@ -14,10 +14,11 @@ impl aspects::ContainerAspect for Signal {
     }
 
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
-        vec![aspects::DockerfileSnippet {
-            order: 90,
-            content: String::from(
-                r#"RUN apt-get update && apt-get install -y --no-install-recommends \
+        vec![
+            aspects::DockerfileSnippet {
+                order: 90,
+                content: String::from(
+                    r#"RUN apt-get update && apt-get install -y --no-install-recommends \
         libgtk-3-0 \
         libpango1.0-0 \
         libcanberra-gtk* \
@@ -33,8 +34,13 @@ impl aspects::ContainerAspect for Signal {
         signal-desktop \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /src/*.deb "#,
-            ),
-        }]
+                ),
+            },
+            aspects::DockerfileSnippet {
+                order: 91,
+                content: String::from(r#"RUN chmod 4755 /opt/Signal/chrome-sandbox"#),
+            },
+        ]
     }
 }
 
