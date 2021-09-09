@@ -9,6 +9,7 @@ workflows:
 
 jobs:
   machine-job:
+    machine: true
     docker:
       - image: 'registry.digitalocean.com/meowmeow/node:latest'
         aws_auth:
