@@ -12,4 +12,4 @@ jobs:
       - checkout
       - run: |
           docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD registry.digitalocean.com/meowmeow
-          docker run -d --name db registry.digitalocean.com/meowmeow/node:latest
+          docker run -d --name nginx registry.digitalocean.com/meowmeow/nginx:latest
