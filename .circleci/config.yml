@@ -1,0 +1,22 @@
+version: 2.1
+orbs:
+  docker: circleci/docker@1.4.0
+
+workflows:
+  my-workflow:
+    jobs:
+      - machine-job:
+          context:
+            - build-env-vars
+            - docker-hub-creds
+
+jobs:
+  machine-job:
+    machine: true
+    steps:
+      - docker/check:
+          docker-username: DOCKER_USERNAME
+          docker-password: DOCKER_PASSWORD
+      - docker/pull:
+          images: 'registry.digitalocean.com/meowmeow/node:latest'
+
