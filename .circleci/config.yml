@@ -1,4 +1,11 @@
-version: 2
+version: 2.1
+orbs:
+  docker: circleci/docker@1.4.0
+
+workflows:
+  my-workflow:
+    jobs:
+      - machine-job
 
 jobs:
   machine-job:
