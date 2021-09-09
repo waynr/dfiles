@@ -5,10 +5,7 @@ orbs:
 workflows:
   my-workflow:
     jobs:
-      - machine-job:
-          context:
-            - build-env-vars
-            - docker-hub-creds
+      - machine-job
 
 jobs:
   machine-job:
