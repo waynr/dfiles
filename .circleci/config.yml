@@ -8,8 +8,8 @@ workflows:
 jobs:
   machine-job:
     machine: true
-    docker:
-      - image: 'registry.digitalocean.com/meowmeow/node:latest'
-        aws_auth:
-          aws_access_key_id: DOCKER_USERNAME
-          aws_secret_access_key: DOCKER_PASSWORD
+    steps:
+      - checkout
+      - run: |
+          docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+          docker run -d --name db registry.digitalocean.com/meowmeow/node:latest
