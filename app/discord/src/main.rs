@@ -18,14 +18,27 @@ impl aspects::ContainerAspect for Discord {
             order: 91,
             content: format!(
                 r#"WORKDIR /opt/
-RUN curl https://dl.discordapp.net/apps/linux/0.0.10/discord-0.0.10.deb > /opt/discord.deb && \
+RUN curl https://dl.discordapp.net/apps/linux/0.0.17/discord-0.0.17.deb > /opt/discord.deb && \
     dpkg --force-depends -i /opt/discord.deb  ; rm /opt/discord.deb
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,
             ),
-        }]
+        },
+            aspects::DockerfileSnippet {
+                order: 92,
+                content: String::from(
+                    r#"RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    libxshmfence1 \
+    libgbm1 \
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
+                ),
+            },
+        ]
     }
 }
 
