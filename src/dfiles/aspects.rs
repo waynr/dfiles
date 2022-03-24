@@ -92,7 +92,6 @@ RUN chmod 644 /etc/pulse/client.conf"#,
                     r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libavcodec-extra \
-    libavcodec-extra58 \
     libpulse0 \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
