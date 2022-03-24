@@ -56,7 +56,7 @@ ENTRYPOINT ["/run-thinkorswim.sh"]
     fn container_files(&self) -> Vec<aspects::ContainerFile> {
         vec![aspects::ContainerFile {
             container_path: String::from("./opt/run-thinkorswim.sh"),
-            contents: String::from(std::include_str!("entrypoint.sh")),
+            contents: std::include_str!("entrypoint.sh").into(),
         }]
     }
 }

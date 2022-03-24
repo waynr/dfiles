@@ -50,7 +50,7 @@ RUN chmod 644 /etc/fonts/local.conf"#,
     fn container_files(&self) -> Vec<aspects::ContainerFile> {
         vec![aspects::ContainerFile {
             container_path: String::from("./etc/fonts/local.conf"),
-            contents: String::from(
+            contents: Vec::from(
                 r#"<?xml version='1.0'?>
 <!DOCTYPE fontconfig SYSTEM 'fonts.dtd'>
 <fontconfig>

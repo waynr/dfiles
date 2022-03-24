@@ -189,7 +189,7 @@ impl ContainerManager {
             dockerfile_contents.push('\n');
         }
 
-        add_file_to_archive(&mut a, "Dockerfile", &dockerfile_contents)?;
+        add_file_to_archive(&mut a, "Dockerfile", &dockerfile_contents.as_bytes())?;
 
         Ok(())
     }
@@ -331,14 +331,14 @@ impl ContainerManager {
     }
 }
 
-fn add_file_to_archive<W: Write>(b: &mut Builder<W>, name: &str, contents: &str) -> Result<()> {
+fn add_file_to_archive<W: Write>(b: &mut Builder<W>, name: &str, contents: &[u8]) -> Result<()> {
     let mut header = Header::new_gnu();
     header
         .set_path(name)
         .map_err(|e| Error::FailedToAddFileToArchive { source: e })?;
     header.set_size(contents.len() as u64);
     header.set_cksum();
-    b.append(&header, contents.as_bytes())
+    b.append(&header, contents)
         .map_err(|e| Error::FailedToAddFileToArchive { source: e })
 }
 

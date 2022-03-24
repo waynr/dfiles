@@ -18,7 +18,7 @@ pub struct DockerfileSnippet {
 
 pub struct ContainerFile {
     pub container_path: String,
-    pub contents: String,
+    pub contents: Vec<u8>,
 }
 
 pub trait ContainerAspect: dyn_clone::DynClone {
@@ -114,7 +114,7 @@ daemon-binary = /bin/true
 # Prevent the use of shared memory
 enable-shm = false
             ",
-            ),
+            ).into(),
         }]
     }
 }
