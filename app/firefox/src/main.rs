@@ -22,7 +22,7 @@ impl aspects::ContainerAspect for Firefox {
 ADD https://archive.mozilla.org/pub/firefox/releases/{release}/linux-x86_64/en-US/firefox-{release}.tar.bz2 ./
 RUN tar -xjvf /opt/firefox-{release}.tar.bz2
 RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
-                    release = "89.0",
+                    release = env!("CARGO_PKG_VERSION"),
                 ),
             },
             aspects::DockerfileSnippet {
@@ -31,6 +31,7 @@ RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
                     r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     firefox-esr \
+    libasound2 \
     libxt6 \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
