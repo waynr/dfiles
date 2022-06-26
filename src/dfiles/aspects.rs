@@ -183,6 +183,22 @@ impl ContainerAspect for Video {
             .flatten()
             .collect())
     }
+    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
+        vec![DockerfileSnippet {
+            order: 72,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    libpci3 \
+    libpciaccess0 \
+    libegl1 \
+    libgl1 \
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
+            ),
+        }]
+    }
 }
 
 #[derive(Clone)]
