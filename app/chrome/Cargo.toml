@@ -1,6 +1,9 @@
 [package]
 name = "chrome"
-version = "0.1.0"
+# because google chrome doesn't allow us to install a specific actual version of chrome, we have to
+# go with a date-based version string here since the best we can do at image build time is know the
+# current datetime
+version = "2022.6.26"
 authors = ["Wayne Warren <wayne.warren.s@gmail.com>"]
 edition = "2018"
 

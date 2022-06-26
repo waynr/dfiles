@@ -1,3 +1,5 @@
+use std::env;
+
 use anyhow::{Context, Result};
 
 use dfiles::aspects;
@@ -91,12 +93,15 @@ RUN chmod 644 /etc/fonts/local.conf"#,
 }
 
 fn main() -> Result<()> {
-    let container_path = String::from("/data");
+    let data_dir = String::from("/data");
+    let home = env::var("HOME").expect("HOME must be set");
+    let home_dir = format!("{}/.config", home);
+    let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = ContainerManager::default_debian(
         "chrome".to_string(),
-        vec![String::from("waynr/chrome:v0")],
-        vec![container_path],
+        vec![format!("waynr/chrome:{}", version)],
+        vec![home_dir, data_dir.clone()],
         vec![
             Box::new(Chrome {}),
             Box::new(aspects::Name("chrome".to_string())),
@@ -108,11 +113,14 @@ fn main() -> Result<()> {
             Box::new(aspects::SysAdmin {}),
             Box::new(aspects::Shm {}),
         ],
-        vec!["google-chrome", "--user-data-dir=/data"]
-            .into_iter()
-            .map(String::from)
-            .collect(),
-        None,
+        vec![
+            "google-chrome",
+            &format!("--user-data-dir={}", data_dir),
+        ]
+        .into_iter()
+        .map(String::from)
+        .collect(),
+        Some(String::from("bullseye")),
     );
 
     mgr.execute().context("executing chrome in container")
