@@ -1,6 +1,6 @@
 [package]
 name = "firefox"
-version = "105.0.1"
+version = "106.0.1"
 authors = ["Wayne Warren <wayne.warren.s@gmail.com>"]
 edition = "2018"
 
