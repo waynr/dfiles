@@ -8,6 +8,8 @@ use dfiles::containermanager::ContainerManager;
 #[derive(Clone)]
 struct Firefox {}
 
+const VERSION: &'static str = "107.0.1";
+
 impl aspects::ContainerAspect for Firefox {
     fn name(&self) -> String {
         String::from("firefox")
@@ -22,7 +24,7 @@ impl aspects::ContainerAspect for Firefox {
 ADD https://archive.mozilla.org/pub/firefox/releases/{release}/linux-x86_64/en-US/firefox-{release}.tar.bz2 ./
 RUN tar -xjvf /opt/firefox-{release}.tar.bz2
 RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
-                    release = env!("CARGO_PKG_VERSION"),
+                    release = VERSION,
                 ),
             },
             aspects::DockerfileSnippet {
@@ -46,11 +48,9 @@ fn main() -> Result<()> {
     let home = env::var("HOME").expect("HOME must be set");
     let container_path = format!("{}/.mozilla/firefox/profile", home);
 
-    let version = env!("CARGO_PKG_VERSION");
-
     let mut mgr = ContainerManager::default_debian(
         "firefox".to_string(),
-        vec![format!("{}:{}", "waynr/firefox", version)],
+        vec![format!("{}:{}", "waynr/firefox", VERSION)],
         vec![container_path.clone()],
         vec![
             Box::new(Firefox {}),
