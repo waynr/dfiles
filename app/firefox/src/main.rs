@@ -8,7 +8,7 @@ use dfiles::containermanager::ContainerManager;
 #[derive(Clone)]
 struct Firefox {}
 
-const VERSION: &'static str = "107.0.1";
+const VERSION: &'static str = "109.0.1";
 
 impl aspects::ContainerAspect for Firefox {
     fn name(&self) -> String {
