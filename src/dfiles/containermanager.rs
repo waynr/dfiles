@@ -217,7 +217,7 @@ impl ContainerManager {
     }
 
     fn generate_archive(&self) -> Result<()> {
-        let mut tar_file = File::create("whatever.tar")?;
+        let mut tar_file = File::create(format!("{}.tar", self.name))?;
         self.generate_archive_impl(&mut tar_file)
     }
 
