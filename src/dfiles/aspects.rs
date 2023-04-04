@@ -198,11 +198,10 @@ impl ContainerAspect for Video {
             .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        vec![
-            DockerfileSnippet {
-                order: 72,
-                content: String::from(
-                    r#"RUN apt-get update && apt-get install -y \
+        vec![DockerfileSnippet {
+            order: 72,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libpci3 \
     libpciaccess0 \
