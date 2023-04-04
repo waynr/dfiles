@@ -11,7 +11,7 @@ pub enum Error {
     #[error("could not find current binary")]
     CouldNotFindCurrentBinary(#[from] std::io::Error),
 
-    #[error("could not find current binary")]
+    #[error("failed to add file to archive")]
     FailedToAddFileToArchive { source: std::io::Error },
 
     #[error("could not identify user with uid `{0:?}`")]
@@ -23,8 +23,11 @@ pub enum Error {
     #[error("invalid mount string `{0:?}`")]
     InvalidMount(String),
 
-    #[error("invalide locale `{0:?}`")]
+    #[error("invalid locale `{0}`")]
     InvalidLocale(String),
+
+    #[error("invalid timezone `{0}`")]
+    InvalidTimezone(String),
 
     #[error("could not identify directory")]
     MissingDirectory,

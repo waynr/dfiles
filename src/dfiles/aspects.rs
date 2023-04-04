@@ -662,8 +662,12 @@ RUN echo {tz} > /etc/timezone
 
 impl TryFrom<&str> for Timezone {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
-        let _ = tzdata::Timezone::new(value)?;
-        Ok(Timezone(value.to_string()))
+    fn try_from(input: &str) -> Result<Self> {
+        let tz = input.to_string();
+        match tzdata::Timezone::new(input)
+        {
+            Ok(_) => Ok(Timezone(tz)),
+            Err(_) => Err(Error::InvalidTimezone(tz)),
+        }
     }
 }
