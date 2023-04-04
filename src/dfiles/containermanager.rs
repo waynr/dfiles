@@ -54,6 +54,28 @@ impl ContainerManager {
         }
     }
 
+    pub fn default_ubuntu(
+        name: String,
+        tags: Vec<String>,
+        container_paths: Vec<String>,
+        mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+        args: Vec<String>,
+        version: Option<String>,
+    ) -> ContainerManager {
+        let aspect = match version {
+            None => String::from("20.04"),
+            Some(s) => s,
+        };
+        aspects.insert(0, Box::new(Ubuntu { version: aspect }));
+        ContainerManager {
+            name: name,
+            tags: tags,
+            container_paths: container_paths,
+            aspects: aspects,
+            args: args,
+        }
+    }
+
     fn image(&self) -> String {
         self.tags[0].clone()
     }
@@ -356,6 +378,63 @@ impl aspects::ContainerAspect for Debian {
             aspects::DockerfileSnippet {
                 order: 00,
                 content: format!("FROM debian:{}", self.version),
+            },
+            aspects::DockerfileSnippet {
+                order: 3,
+                content: String::from(
+                    r#"# Useful language packs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  fonts-arphic-bkai00mp \
+  fonts-arphic-bsmi00lp \
+  fonts-arphic-gbsn00lp \
+  fonts-arphic-gbsn00lp \
+  \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb"#,
+                ),
+            },
+            aspects::DockerfileSnippet {
+                order: 2,
+                content: String::from(
+                    r#"RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    apt-utils \
+    apt-transport-https \
+    apt \
+    bzip2 \
+    ca-certificates \
+    curl \
+    debian-goodies \
+    dirmngr \
+    gnupg \
+    keychain \
+    lsb-release \
+    locales \
+    lsof \
+    procps \
+  && apt-get purge --autoremove \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /src/*.deb "#,
+                ),
+            },
+        ]
+    }
+}
+
+#[derive(Clone)]
+struct Ubuntu {
+    pub version: String,
+}
+
+impl aspects::ContainerAspect for Ubuntu {
+    fn name(&self) -> String {
+        String::from("Ubuntu")
+    }
+    fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
+        vec![
+            aspects::DockerfileSnippet {
+                order: 00,
+                content: format!("FROM ubuntu:{}", self.version),
             },
             aspects::DockerfileSnippet {
                 order: 3,
