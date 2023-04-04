@@ -177,7 +177,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrome"
-version = "2022.6.26"
+version = "2023.2.17"
 dependencies = [
  "anyhow",
  "clap",
@@ -353,6 +353,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "darktable"
+version = "4.0.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dfiles",
 ]
 
 [[package]]
@@ -1124,6 +1133,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "qcad"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dfiles",
 ]
 
 [[package]]
