@@ -22,7 +22,7 @@ impl aspects::ContainerAspect for Thinkorswim {
                 content: format!(
                     r#"
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        openjdk-8-jre \
+        openjdk-11-jre \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /src/*.deb"#,
                 ),
@@ -96,7 +96,7 @@ fn main() -> Result<()> {
             Box::new(aspects::Shm {}),
         ],
         vec![format!("{}/thinkorswim", thinkorswim_install_dir)],
-        Some(String::from("stretch")),
+        Some(String::from("bullseye")),
     );
 
     mgr.execute().context("executing thinkorswim in container")
