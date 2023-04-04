@@ -647,6 +647,17 @@ RUN echo {tz} > /etc/timezone
             ),
         }]
     }
+    fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
+        let mut timezone = self.0.clone();
+        if let Some(m) = matches {
+            if let Some(tz) = m.value_of("timezone") {
+                timezone = tz.to_string()
+            }
+        }
+
+        let args: Vec<String> = vec!["-e".to_string(), format!("TZ={0}", timezone).to_string()];
+        Ok(args)
+    }
 }
 
 impl TryFrom<&str> for Timezone {
