@@ -580,8 +580,8 @@ WORKDIR /home/{user}
         }
         vec![entrypoint::Script {
             description: format!("create a user named {}", self.name),
-            sudo_args: vec!["--user".to_string(), format!("{}", self.name)],
-            script: String::new(),
+            as_user: Some(self.name.clone()),
+            script: r#"TODO"#.to_string(),
         }]
     }
 }

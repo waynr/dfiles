@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
 use std::path::PathBuf;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
@@ -82,48 +80,6 @@ impl ContainerManager {
         self.tags[0].clone()
     }
 
-    fn entrypoint_args(&self, matches: &ArgMatches) -> Result<Vec<String>> {
-        let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
-
-        if let Some(c) = matches.value_of("entrypoint") {
-            args.extend_from_slice(&["--entrypoint".to_string(), c.to_string()]);
-        }
-
-        if let Some(s) = matches.value_of("local-entrypoint") {
-            // check if local_path exists and meets all the requirements of an entrypoint script
-            let local_path = Path::new(s);
-
-            if !local_path.is_absolute() {
-                return Err(Error::LocalEntrypointPathMustBeAbsolute);
-            }
-
-            if !local_path.exists() {
-                return Err(Error::LocalEntrypointPathMustExist);
-            }
-
-            if !local_path.is_file() {
-                return Err(Error::LocalEntrypointPathMustBeARegularFile);
-            }
-
-            let mode = local_path.metadata()?.permissions().mode();
-
-            if mode & 0o500 != 0o500 {
-                return Err(Error::LocalEntrypointPathMustBeExecutable);
-            }
-
-            // construct entrypoint-related arguments
-            let container_path = "/entrypoint.sh";
-            args.extend_from_slice(&[
-                "-v".to_string(),
-                format!("{}:{}", s, container_path).to_string(),
-                "--entrypoint".to_string(),
-                container_path.to_string(),
-            ]);
-        }
-
-        Ok(args)
-    }
-
     fn run(&self, matches: &ArgMatches) -> Result<()> {
         let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
         let mut ep = entrypoint::Entrypoint::empty();
@@ -135,13 +91,9 @@ impl ContainerManager {
         }
 
         if !ep.is_empty() {
-            ep.prepare()?;
             args.extend(ep.run_args()?);
         }
 
-        let entrypoint_args = self.entrypoint_args(matches)?;
-
-        args.extend_from_slice(&entrypoint_args);
         args.push(self.image().to_string());
         args.extend_from_slice(&self.args);
         docker::run(args);
@@ -150,10 +102,12 @@ impl ContainerManager {
 
     fn cmd(&self, matches: &ArgMatches) -> Result<()> {
         let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
+        let mut ep = entrypoint::Entrypoint::empty();
 
         for aspect in &self.aspects {
             println!("{:}", aspect);
             args.extend(aspect.run_args(Some(&matches))?);
+            ep.extend(aspect.entrypoint_scripts());
         }
 
         let command: Vec<String> = match matches.values_of("command") {
@@ -161,9 +115,10 @@ impl ContainerManager {
             Some(s) => s.map(|s| s.to_string()).collect(),
         };
 
-        let entrypoint_args = self.entrypoint_args(matches)?;
+        if !ep.is_empty() {
+            args.extend(ep.run_args()?);
+        }
 
-        args.extend_from_slice(&entrypoint_args);
         args.push(self.image().to_string());
         args.extend_from_slice(command.as_slice());
 
@@ -275,8 +230,11 @@ impl ContainerManager {
         let binary = std::env::current_exe()?;
         println!("{:?}", binary);
         if binary == PathBuf::from("/entrypoint") {
-            println!("wtf mate");
-            let args = std::env::args().into_iter().map(String::from).collect();
+            let args: Vec<String> = std::env::args()
+                .into_iter()
+                .map(String::from)
+                .collect::<Vec<String>>()
+                .split_off(1); // don't include /entrypoint
             let ep = entrypoint::Entrypoint::load();
             return ep.execute(args);
         }
@@ -309,27 +267,6 @@ impl ContainerManager {
             run = run.arg(arg);
             cmd = cmd.arg(arg);
             config = config.arg(arg);
-        }
-
-        let ep_args = vec![
-            Arg::with_name("entrypoint")
-                .takes_value(true)
-                .short("e")
-                .long("entrypoint")
-                .help("specify the entrypoint command of the container"),
-            Arg::with_name("local-entrypoint")
-                .takes_value(true)
-                .conflicts_with("entrypoint")
-                .long("local-entrypoint")
-                .help("specify the entrypoint command of the container"),
-        ];
-
-        for arg in ep_args.clone() {
-            cmd = cmd.arg(arg);
-        }
-
-        for arg in ep_args {
-            run = run.arg(arg);
         }
 
         cmd = cmd.arg(

@@ -12,8 +12,14 @@ pub enum Error {
     #[error("missing entrypoint args")]
     MissingEntrypointArgs,
 
+    #[error("must specify container command")]
+    MustSpecifyContainerCommand,
+
+    #[error("generic io error")]
+    IOError(#[from] std::io::Error),
+
     #[error("could not find current binary")]
-    CouldNotFindCurrentBinary(#[from] std::io::Error),
+    CouldNotFindCurrentBinary(String),
 
     #[error("failed to add file to archive")]
     FailedToAddFileToArchive { source: std::io::Error },
