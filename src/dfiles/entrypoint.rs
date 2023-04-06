@@ -7,6 +7,7 @@ use super::error::Result;
 
 pub struct Script {
     pub description: String,
+    pub order: u16,
     pub snippet: String,
 }
 
@@ -31,13 +32,14 @@ fn run_args(tmpdir: &Path) -> Result<Vec<String>> {
     Ok(args)
 }
 
-fn write_scripts(tmpdir: &Path, scripts: Vec<Script>) -> Result<PathBuf> {
+fn write_scripts(tmpdir: &Path, mut scripts: Vec<Script>) -> Result<PathBuf> {
     let path = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT);
     std::fs::create_dir_all(path.parent().unwrap())?;
     let mut file = std::fs::File::create(&path)?;
 
     write!(file, "#!/usr/bin/env bash\n")?;
     write!(file, "\nUSER=root\n")?;
+    scripts.sort_by(|a, b| a.order.partial_cmp(&b.order).unwrap() );
     for script in scripts {
         write!(file, "\n")?;
         for line in script.description.lines() {
