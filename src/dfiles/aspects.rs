@@ -535,7 +535,6 @@ impl ContainerAspect for CurrentUser {
     fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
         vec![entrypoint::Script {
             description: format!("create a user named {}", self.name),
-            as_user: None,
             snippet: format!(
                 r#"addgroup --gid {gid} {group}
 useradd --home-dir /home/{user} \

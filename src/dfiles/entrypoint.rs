@@ -10,7 +10,6 @@ use super::error::Result;
 
 pub struct Script {
     pub description: String,
-    pub as_user: Option<String>,
     pub snippet: String,
 }
 
