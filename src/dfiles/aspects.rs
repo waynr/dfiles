@@ -39,7 +39,7 @@ pub trait ContainerAspect: dyn_clone::DynClone {
     fn container_files(&self) -> Vec<ContainerFile> {
         Vec::new()
     }
-    fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
+    fn entrypoint_scripts(&self) -> Vec<entrypoint::ScriptSnippet> {
         Vec::new()
     }
 }
@@ -532,8 +532,8 @@ impl ContainerAspect for CurrentUser {
         format!("User: {}", &self.name)
     }
 
-    fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
-        vec![entrypoint::Script {
+    fn entrypoint_scripts(&self) -> Vec<entrypoint::ScriptSnippet> {
+        vec![entrypoint::ScriptSnippet {
             description: format!("create a user named {}", self.name),
             order: 02,
             snippet: format!(

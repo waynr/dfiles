@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use super::aspects;
 use super::error::Result;
 
-pub struct Script {
+pub struct ScriptSnippet {
     pub description: String,
     pub order: u16,
     pub snippet: String,
@@ -32,7 +32,7 @@ fn run_args(tmpdir: &Path) -> Result<Vec<String>> {
     Ok(args)
 }
 
-fn write_scripts(tmpdir: &Path, mut scripts: Vec<Script>) -> Result<PathBuf> {
+fn write_scripts(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathBuf> {
     let path = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT);
     std::fs::create_dir_all(path.parent().unwrap())?;
     let mut file = std::fs::File::create(&path)?;
@@ -62,7 +62,7 @@ pub(crate) fn setup(
     tmpdir: &Path,
     aspects: &Vec<Box<dyn aspects::ContainerAspect>>,
 ) -> Result<Vec<String>> {
-    let scripts: Vec<Script> = aspects
+    let scripts: Vec<ScriptSnippet> = aspects
         .iter()
         .map(|a| a.entrypoint_scripts())
         .flatten()
