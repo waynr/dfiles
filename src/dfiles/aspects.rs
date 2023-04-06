@@ -496,7 +496,6 @@ impl fmt::Display for CurrentUserMode {
 
 #[derive(Clone)]
 pub struct CurrentUser {
-    pub mode: CurrentUserMode,
     name: String,
     uid: String,
     group: String,
@@ -508,7 +507,7 @@ impl CurrentUser {
         self.name.clone()
     }
 
-    pub fn detect(mode: CurrentUserMode) -> Result<Self> {
+    pub fn detect() -> Result<Self> {
         let uid = users::get_current_uid();
         let gid = users::get_current_gid();
         let name = match users::get_user_by_uid(uid) {
@@ -520,7 +519,6 @@ impl CurrentUser {
             None => return Err(Error::MissingGroup(gid.to_string())),
         };
         Ok(CurrentUser {
-            mode: mode,
             name: name,
             uid: uid.to_string(),
             group: group,
@@ -531,14 +529,10 @@ impl CurrentUser {
 
 impl ContainerAspect for CurrentUser {
     fn name(&self) -> String {
-        format!("User<{}>: {}", &self.mode, &self.name)
+        format!("User: {}", &self.name)
     }
 
     fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
-        match self.mode {
-            CurrentUserMode::Entrypoint => (),
-            _ => return Vec::new(),
-        }
         vec![entrypoint::Script {
             description: format!("create a user named {}", self.name),
             as_user: None,

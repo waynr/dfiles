@@ -61,7 +61,7 @@ fn main() -> Result<()> {
         ],
         vec!["drawio"].into_iter().map(String::from).collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing drawio in container")
 }

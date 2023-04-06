@@ -97,7 +97,7 @@ fn main() -> Result<()> {
         ],
         vec![format!("{}/thinkorswim", thinkorswim_install_dir)],
         Some(String::from("bullseye")),
-    );
+    )?;
 
     mgr.execute().context("executing thinkorswim in container")
 }

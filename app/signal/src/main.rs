@@ -56,10 +56,7 @@ fn main() -> Result<()> {
             Box::new(Signal {}),
             Box::new(aspects::Name("signal".to_string())),
             Box::new(aspects::PulseAudio {}),
-            Box::new(
-                aspects::CurrentUser::detect(aspects::CurrentUserMode::Builtin)
-                    .context("detecting current user")?,
-            ),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
             Box::new(aspects::DBus {}),
@@ -70,7 +67,7 @@ fn main() -> Result<()> {
             .map(String::from)
             .collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing signal in container")
 }

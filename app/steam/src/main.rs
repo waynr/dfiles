@@ -23,7 +23,7 @@ RUN apt-get update && yes 'I AGREE' | apt-get install -y \
         steam \
     && apt-get purge --autoremove \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb 
+    && rm -rf /src/*.deb
 RUN chmod 4755 /opt/Signal/chrome-sandox"#,
             ),
         }]
@@ -43,10 +43,7 @@ fn main() -> Result<()> {
         vec![
             Box::new(Steam {}),
             Box::new(aspects::Name("steam".to_string())),
-            Box::new(
-                aspects::CurrentUser::detect(aspects::CurrentUserMode::Builtin)
-                    .context("detecting current user")?,
-            ),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::Alsa {}),
             Box::new(aspects::X11 {}),
@@ -59,7 +56,7 @@ fn main() -> Result<()> {
             .map(String::from)
             .collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing steam in container")
 }

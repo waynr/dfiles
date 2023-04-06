@@ -55,10 +55,7 @@ fn main() -> Result<()> {
         vec![
             Box::new(Firefox {}),
             Box::new(aspects::Name("firefox".to_string())),
-            Box::new(
-                aspects::CurrentUser::detect(aspects::CurrentUserMode::Entrypoint)
-                    .context("detecting current user")?,
-            ),
+            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
             Box::new(aspects::PulseAudio {}),
             Box::new(aspects::X11 {}),
             Box::new(aspects::Video {}),
@@ -75,7 +72,7 @@ fn main() -> Result<()> {
         .map(String::from)
         .collect(),
         Some(String::from("bookworm")),
-    );
+    )?;
 
     mgr.execute().context("executing firefox in container")
 }
