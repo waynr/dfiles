@@ -122,6 +122,9 @@ enable-shm = false
             .into(),
         }]
     }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(vec![entrypoint::group_setup("audio")?])
+    }
 }
 
 #[derive(Clone)]
@@ -135,6 +138,9 @@ impl ContainerAspect for Alsa {
             .into_iter()
             .map(String::from)
             .collect())
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(vec![entrypoint::group_setup("audio")?])
     }
 }
 
@@ -216,6 +222,9 @@ impl ContainerAspect for Video {
   && rm -rf /src/*.deb "#,
             ),
         }]
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(vec![entrypoint::group_setup("video")?])
     }
 }
 
@@ -470,9 +479,6 @@ impl ContainerAspect for Name {
 #[derive(Clone)]
 pub struct CurrentUser {
     name: String,
-    uid: String,
-    group: String,
-    gid: String,
 }
 
 impl CurrentUser {
@@ -481,6 +487,21 @@ impl CurrentUser {
     }
 
     pub fn detect() -> Result<Self> {
+        let uid = users::get_current_uid();
+        let name = match users::get_user_by_uid(uid) {
+            Some(n) => n.name().to_string_lossy().to_string(),
+            None => return Err(Error::MissingUser(uid.to_string())),
+        };
+        Ok(Self { name })
+    }
+}
+
+impl ContainerAspect for CurrentUser {
+    fn name(&self) -> String {
+        format!("User: {}", &self.name)
+    }
+
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
         let uid = users::get_current_uid();
         let gid = users::get_current_gid();
         let name = match users::get_user_by_uid(uid) {
@@ -491,22 +512,7 @@ impl CurrentUser {
             Some(g) => g.name().to_string_lossy().to_string(),
             None => return Err(Error::MissingGroup(gid.to_string())),
         };
-        Ok(CurrentUser {
-            name: name,
-            uid: uid.to_string(),
-            group: group,
-            gid: gid.to_string(),
-        })
-    }
-}
-
-impl ContainerAspect for CurrentUser {
-    fn name(&self) -> String {
-        format!("User: {}", &self.name)
-    }
-
-    fn entrypoint_scripts(&self) -> Vec<entrypoint::ScriptSnippet> {
-        vec![entrypoint::ScriptSnippet {
+        Ok(vec![entrypoint::ScriptSnippet {
             description: format!("create a user named {}", self.name),
             order: 02,
             snippet: format!(
@@ -517,21 +523,20 @@ useradd --home-dir /home/{user} \
     --gid {gid} \
     {user}
 
-adduser {user} audio
+# NOTE: I don't remember why this was necessary...
 adduser {user} tty
-adduser {user} video
 
 mkdir -p /data /home/{user}
 chown {user}:{group} /data /home/{user}
 
 cd /home/{user}
 USER={user}"#,
-                gid = &self.gid,
-                group = &self.group,
-                user = &self.name,
-                uid = &self.uid,
+                gid = gid,
+                group = group,
+                user = name,
+                uid = uid,
             ),
-        }]
+        }])
     }
 }
 

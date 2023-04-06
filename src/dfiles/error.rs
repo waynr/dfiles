@@ -6,12 +6,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("not in entrypoint mode")]
-    NotInEntrypointMode,
-
-    #[error("missing entrypoint args")]
-    MissingEntrypointArgs,
-
     #[error("must specify container command")]
     MustSpecifyContainerCommand,
 
@@ -24,10 +18,10 @@ pub enum Error {
     #[error("failed to add file to archive")]
     FailedToAddFileToArchive { source: std::io::Error },
 
-    #[error("could not identify user with uid `{0:?}`")]
+    #[error("could not identify user `{0:?}`")]
     MissingUser(String),
 
-    #[error("could not identify user with gid `{0:?}`")]
+    #[error("could not identify group `{0:?}`")]
     MissingGroup(String),
 
     #[error("invalid mount string `{0:?}`")]

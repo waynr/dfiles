@@ -3,7 +3,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use super::aspects;
-use super::error::Result;
+use super::error::{Error, Result};
 
 pub struct ScriptSnippet {
     pub description: String,
@@ -88,4 +88,28 @@ pub(crate) fn setup(
     write_scripts(&tmpdir, scripts)?;
     println!("{}", tmpdir.display());
     run_args(&tmpdir)
+}
+
+pub fn group_setup(group_name: &str) -> Result<ScriptSnippet> {
+    let name = match users::get_current_username() {
+        Some(n) => n.to_string_lossy().to_string(),
+        None => return Err(Error::MissingUser("<unknown>".to_string())),
+    };
+    let video_group = match users::get_group_by_name(group_name) {
+        Some(id) => id,
+        None => return Err(Error::MissingGroup(group_name.to_string())),
+    };
+    Ok(ScriptSnippet {
+        order: 5,
+        description: "configure video group for container user".to_string(),
+        snippet: String::from(format!(
+            r#"
+adduser {user} {group_name}
+groupmod -g {video_gid} {group_name}
+        "#,
+            user = name,
+            group_name = video_group.name().to_string_lossy(),
+            video_gid = video_group.gid(),
+        )),
+    })
 }
