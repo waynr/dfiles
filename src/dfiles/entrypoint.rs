@@ -39,7 +39,7 @@ fn write_scripts(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathB
 
     write!(file, "#!/usr/bin/env bash\n")?;
     write!(file, "\nUSER=root\n")?;
-    scripts.sort_by(|a, b| a.order.partial_cmp(&b.order).unwrap() );
+    scripts.sort_by(|a, b| a.order.partial_cmp(&b.order).unwrap());
     for script in scripts {
         write!(file, "\n")?;
         for line in script.description.lines() {
@@ -65,24 +65,22 @@ pub(crate) fn setup(
     let mut result = Ok(Vec::new());
     let scripts: Vec<ScriptSnippet> = aspects
         .iter()
-        .map_while(|a| {
-            match a.entrypoint_snippets() {
-                Ok(v) => Some(v),
-                Err(e) => {
-                    result = Err(e);
-                    None
-                },
+        .map_while(|a| match a.entrypoint_snippets() {
+            Ok(v) => Some(v),
+            Err(e) => {
+                result = Err(e);
+                None
             }
         })
         .flatten()
         .collect();
 
     if let Err(_) = result {
-        return result
+        return result;
     }
 
     if scripts.len() == 0 {
-        return result
+        return result;
     }
 
     write_scripts(&tmpdir, scripts)?;
