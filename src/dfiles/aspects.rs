@@ -299,17 +299,6 @@ impl ContainerAspect for SysAdmin {
 }
 
 #[derive(Clone)]
-pub struct TTY {}
-impl ContainerAspect for TTY {
-    fn name(&self) -> String {
-        String::from("TTY")
-    }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
-        Ok(vec!["-i", "-t"].into_iter().map(String::from).collect())
-    }
-}
-
-#[derive(Clone)]
 pub struct Shm {}
 impl ContainerAspect for Shm {
     fn name(&self) -> String {
