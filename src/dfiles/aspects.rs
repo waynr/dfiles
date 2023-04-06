@@ -39,8 +39,8 @@ pub trait ContainerAspect: dyn_clone::DynClone {
     fn container_files(&self) -> Vec<ContainerFile> {
         Vec::new()
     }
-    fn entrypoint_scripts(&self) -> Vec<entrypoint::ScriptSnippet> {
-        Vec::new()
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(Vec::new())
     }
 }
 
