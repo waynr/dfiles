@@ -29,9 +29,29 @@ pub struct ContainerManager {
     container_paths: Vec<String>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
+    tempdir: tempfile::TempDir,
 }
 
 impl ContainerManager {
+    pub fn default(
+        name: String,
+        tags: Vec<String>,
+        container_paths: Vec<String>,
+        aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+        args: Vec<String>,
+    ) -> Result<ContainerManager> {
+        let tempdir = tempfile::Builder::new()
+                .prefix(&format!("dfiles-{}-{}-", name, std::process::id()))
+                .tempdir()?;
+        Ok(ContainerManager {
+            name: name.clone(),
+            tags,
+            container_paths,
+            aspects,
+            args,
+            tempdir,
+        })
+    }
     pub fn default_debian(
         name: String,
         tags: Vec<String>,
@@ -39,19 +59,13 @@ impl ContainerManager {
         mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
         args: Vec<String>,
         version: Option<String>,
-    ) -> ContainerManager {
+    ) -> Result<ContainerManager> {
         let aspect = match version {
             None => String::from("buster"),
             Some(s) => s,
         };
         aspects.insert(0, Box::new(Debian { version: aspect }));
-        ContainerManager {
-            name: name,
-            tags: tags,
-            container_paths: container_paths,
-            aspects: aspects,
-            args: args,
-        }
+        Self::default(name, tags, container_paths, aspects, args)
     }
 
     pub fn default_ubuntu(
@@ -61,19 +75,13 @@ impl ContainerManager {
         mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
         args: Vec<String>,
         version: Option<String>,
-    ) -> ContainerManager {
+    ) -> Result<ContainerManager> {
         let aspect = match version {
             None => String::from("20.04"),
             Some(s) => s,
         };
         aspects.insert(0, Box::new(Ubuntu { version: aspect }));
-        ContainerManager {
-            name: name,
-            tags: tags,
-            container_paths: container_paths,
-            aspects: aspects,
-            args: args,
-        }
+        Self::default(name, tags, container_paths, aspects, args)
     }
 
     fn image(&self) -> String {
@@ -82,18 +90,14 @@ impl ContainerManager {
 
     fn run(&self, matches: &ArgMatches) -> Result<()> {
         let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
-        let mut ep = entrypoint::Entrypoint::empty();
 
         for aspect in &self.aspects {
             println!("{:}", aspect);
             args.extend(aspect.run_args(Some(&matches))?);
-            ep.extend(aspect.entrypoint_scripts());
         }
 
-        if !ep.is_empty() {
-            args.extend(ep.run_args()?);
-        }
-
+        let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
+        args.extend(ep_args);
         args.push(self.image().to_string());
         args.extend_from_slice(&self.args);
         docker::run(args);
@@ -102,12 +106,10 @@ impl ContainerManager {
 
     fn cmd(&self, matches: &ArgMatches) -> Result<()> {
         let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
-        let mut ep = entrypoint::Entrypoint::empty();
 
         for aspect in &self.aspects {
             println!("{:}", aspect);
             args.extend(aspect.run_args(Some(&matches))?);
-            ep.extend(aspect.entrypoint_scripts());
         }
 
         let command: Vec<String> = match matches.values_of("command") {
@@ -115,10 +117,8 @@ impl ContainerManager {
             Some(s) => s.map(|s| s.to_string()).collect(),
         };
 
-        if !ep.is_empty() {
-            args.extend(ep.run_args()?);
-        }
-
+        let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
+        args.extend(ep_args);
         args.push(self.image().to_string());
         args.extend_from_slice(command.as_slice());
 
@@ -235,8 +235,7 @@ impl ContainerManager {
                 .map(String::from)
                 .collect::<Vec<String>>()
                 .split_off(1); // don't include /entrypoint
-            let ep = entrypoint::Entrypoint::load();
-            return ep.execute(args);
+            return entrypoint::execute(args);
         }
         self.execute_clap()
     }
@@ -248,10 +247,6 @@ impl ContainerManager {
         let mut config = SubCommand::with_name("config").about("configure app container settings");
         let generate_archive = SubCommand::with_name("generate-archive")
             .about("generate archive used to build container");
-
-        let entrypoint = SubCommand::with_name("entrypoint")
-            .about("entrypoint test mode")
-            .arg(Arg::with_name("command").multiple(true).required(true));
 
         let mut app = App::new(&self.name).version("0.0");
 
@@ -278,7 +273,6 @@ impl ContainerManager {
                 .help("command to run instead of default"),
         );
 
-        let mut ep = entrypoint::Entrypoint::empty();
         let cloned = dyn_clone::clone_box(&self.aspects);
         for aspect in cloned.iter() {
             for arg in aspect.config_args() {
@@ -293,7 +287,6 @@ impl ContainerManager {
             for arg in aspect.config_args() {
                 config = config.arg(arg);
             }
-            ep.extend(aspect.entrypoint_scripts());
         }
 
         app = app
@@ -301,7 +294,6 @@ impl ContainerManager {
             .subcommand(cmd)
             .subcommand(build)
             .subcommand(config)
-            .subcommand(entrypoint)
             .subcommand(generate_archive);
 
         let matches = app.get_matches();
@@ -316,13 +308,6 @@ impl ContainerManager {
             ("cmd", Some(subm)) => self.cmd(&subm),
             ("build", _) => self.build(),
             ("config", Some(subm)) => self.config(&subm),
-            ("entrypoint", Some(subm)) => {
-                if let Some(args) = subm.values_of("command") {
-                    ep.execute(args.into_iter().map(String::from).collect())
-                } else {
-                    Err(Error::MissingEntrypointArgs)
-                }
-            }
             ("generate-archive", _) => self.generate_archive(),
             (_, _) => Ok(println!("{}", matches.usage())),
         }

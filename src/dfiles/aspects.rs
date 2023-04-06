@@ -534,45 +534,6 @@ impl ContainerAspect for CurrentUser {
         format!("User<{}>: {}", &self.mode, &self.name)
     }
 
-    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        match self.mode {
-            CurrentUserMode::Builtin => (),
-            _ => return Vec::new(),
-        }
-        vec![
-            DockerfileSnippet {
-                order: 80,
-                content: format!(
-                    r#"RUN addgroup --gid {gid} {group} \
-    &&  adduser --home /home/{user} \
-                --shell /bin/bash \
-                --uid {uid} \
-                --gid {gid} \
-                --disabled-password {user}
-RUN adduser {user} audio
-RUN adduser {user} tty
-RUN adduser {user} video
-RUN mkdir -p /data && chown {user}.{user} /data
-RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
-"#,
-                    gid = &self.gid,
-                    group = &self.group,
-                    user = &self.name,
-                    uid = &self.uid,
-                ),
-            },
-            DockerfileSnippet {
-                order: 98,
-                content: format!(
-                    r#"USER {user}
-WORKDIR /home/{user}
-"#,
-                    user = &self.name
-                ),
-            },
-        ]
-    }
-
     fn entrypoint_scripts(&self) -> Vec<entrypoint::Script> {
         match self.mode {
             CurrentUserMode::Entrypoint => (),
@@ -580,8 +541,29 @@ WORKDIR /home/{user}
         }
         vec![entrypoint::Script {
             description: format!("create a user named {}", self.name),
-            as_user: Some(self.name.clone()),
-            script: r#"TODO"#.to_string(),
+            as_user: None,
+            snippet: format!(
+                r#"addgroup --gid {gid} {group}
+useradd --home-dir /home/{user} \
+    --shell /bin/bash \
+    --uid {uid} \
+    --gid {gid} \
+    {user}
+
+adduser {user} audio
+adduser {user} tty
+adduser {user} video
+
+mkdir -p /data /home/{user}
+chown {user}:{group} /data /home/{user}
+
+cd /home/{user}
+USER={user}"#,
+                gid = &self.gid,
+                group = &self.group,
+                user = &self.name,
+                uid = &self.uid,
+            ),
         }]
     }
 }
