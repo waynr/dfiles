@@ -2,7 +2,6 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
@@ -41,8 +40,8 @@ impl ContainerManager {
         args: Vec<String>,
     ) -> Result<ContainerManager> {
         let tempdir = tempfile::Builder::new()
-                .prefix(&format!("dfiles-{}-{}-", name, std::process::id()))
-                .tempdir()?;
+            .prefix(&format!("dfiles-{}-{}-", name, std::process::id()))
+            .tempdir()?;
         Ok(ContainerManager {
             name: name.clone(),
             tags,
@@ -222,25 +221,6 @@ impl ContainerManager {
     }
 
     pub fn execute(&mut self) -> Result<()> {
-        // note: since we want to use this binary as an entrypoint "script" in a docker container,
-        // it has to be callable without using subcommands so the first thing we do is check if
-        // that's how it was called and skip all clap setup if so, moving straight to entrypoint
-        // execution. this works because we can't meaningfully parse entrypoint arguments anyway
-        // since they vary depending on the command that was passed to `docker run`.
-        let binary = std::env::current_exe()?;
-        println!("{:?}", binary);
-        if binary == PathBuf::from("/entrypoint") {
-            let args: Vec<String> = std::env::args()
-                .into_iter()
-                .map(String::from)
-                .collect::<Vec<String>>()
-                .split_off(1); // don't include /entrypoint
-            return entrypoint::execute(args);
-        }
-        self.execute_clap()
-    }
-
-    fn execute_clap(&mut self) -> Result<()> {
         let mut run = SubCommand::with_name("run").about("run app in container");
         let mut cmd = SubCommand::with_name("cmd").about("run specified command in container");
         let mut build = SubCommand::with_name("build").about("build app container");

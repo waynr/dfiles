@@ -1,9 +1,6 @@
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
-use std::process;
-
-use which::which;
 
 use super::aspects;
 use super::error::Result;
@@ -13,36 +10,31 @@ pub struct Script {
     pub snippet: String,
 }
 
-const ENTRYPOINT_SETUP_SCRIPT_DIR: &str = "entrypoint_scripts";
-const ENTRYPOINT_SETUP_SCRIPT: &str = "/entrypoint_scripts/top.bash";
+const ENTRYPOINT_SETUP_SCRIPT: &str = "entrypoint.bash";
 
 /// Generates command line arguments to be used in `docker run` calls on the host system.
 fn run_args(tmpdir: &Path) -> Result<Vec<String>> {
     let mut args = Vec::new();
-    let binary = std::env::current_exe()?;
+    let local_entrypoint_script = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT);
+    let container_entrypoint_script = PathBuf::from("/").join(ENTRYPOINT_SETUP_SCRIPT);
     args.extend(vec![
-        String::from("-v"),
-        format!("{}:{}", binary.to_string_lossy(), "/entrypoint"),
         String::from("-v"),
         format!(
             "{}:{}",
-            tmpdir.join(ENTRYPOINT_SETUP_SCRIPT_DIR).display(),
-            PathBuf::from("/")
-                .join(ENTRYPOINT_SETUP_SCRIPT_DIR)
-                .display(),
+            local_entrypoint_script.display(),
+            container_entrypoint_script.display()
         ),
         String::from("--entrypoint"),
-        String::from("/entrypoint"),
+        String::from("/entrypoint.bash"),
     ]);
 
     Ok(args)
 }
 
 fn write_scripts(tmpdir: &Path, scripts: Vec<Script>) -> Result<PathBuf> {
-    let path = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT_DIR).join("top.bash");
+    let path = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT);
     std::fs::create_dir_all(path.parent().unwrap())?;
     let mut file = std::fs::File::create(&path)?;
-    file.metadata()?.permissions().set_mode(0o700);
 
     write!(file, "#!/usr/bin/env bash\n")?;
     write!(file, "\nUSER=root\n")?;
@@ -56,6 +48,10 @@ fn write_scripts(tmpdir: &Path, scripts: Vec<Script>) -> Result<PathBuf> {
     }
     write!(file, "\n# execute whatever command was specified\n")?;
     write!(file, "sudo --user $USER $@\n")?;
+
+    let mut perms = file.metadata()?.permissions();
+    perms.set_mode(0o700);
+    file.set_permissions(perms)?;
 
     Ok(path)
 }
@@ -75,17 +71,6 @@ pub(crate) fn setup(
     }
 
     write_scripts(&tmpdir, scripts)?;
+    println!("{}", tmpdir.display());
     run_args(&tmpdir)
-}
-
-pub fn execute(cmd: Vec<String>) -> Result<()> {
-    println!("entrypoint running {:?}", &cmd);
-
-    process::Command::new(which("bash")?)
-        .arg("-x")
-        .arg(ENTRYPOINT_SETUP_SCRIPT)
-        .args(cmd)
-        .status()?;
-
-    Ok(())
 }
