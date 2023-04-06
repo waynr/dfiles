@@ -83,14 +83,6 @@ impl ContainerAspect for PulseAudio {
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         vec![
             DockerfileSnippet {
-                order: 75,
-                content: String::from(
-                    r#"COPY /etc/pulse/client.conf /etc/pulse/client.conf
-RUN chmod 655 /etc/pulse
-RUN chmod 644 /etc/pulse/client.conf"#,
-                ),
-            },
-            DockerfileSnippet {
                 order: 70,
                 content: String::from(
                     r#"RUN apt-get update && apt-get install -y \
@@ -104,12 +96,16 @@ RUN chmod 644 /etc/pulse/client.conf"#,
             },
         ]
     }
-    fn container_files(&self) -> Vec<ContainerFile> {
-        vec![ContainerFile {
-            container_path: String::from("./etc/pulse/client.conf"),
-            contents: String::from(
-                "# Connect to the host's server using the mounted UNIX socket
-default-server = unix:/run/user/11571/pulse/native
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        let uid = users::get_current_uid();
+        Ok(vec![
+            entrypoint::ScriptSnippet {
+                description: "configure pulseaudio client to connect to host daemon".to_string(),
+                order: 50,
+                snippet: String::from(format!(
+                    r#"cat << EOF > /etc/pulse/client.conf
+# Connect to the host's server using the mounted UNIX socket
+default-server = unix:/run/user/{uid}/pulse/native
 
 # Prevent a server running in the container
 autospawn = no
@@ -117,13 +113,15 @@ daemon-binary = /bin/true
 
 # Prevent the use of shared memory
 enable-shm = false
-            ",
-            )
-            .into(),
-        }]
-    }
-    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
-        Ok(vec![entrypoint::group_setup("audio")?])
+EOF
+
+chmod 655 /etc/pulse
+chmod 644 /etc/pulse/client.conf"#,
+                    uid = uid,
+                )),
+            },
+            entrypoint::group_setup("audio")?,
+        ])
     }
 }
 
