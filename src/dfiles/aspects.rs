@@ -479,22 +479,6 @@ impl ContainerAspect for Name {
 }
 
 #[derive(Clone)]
-pub enum CurrentUserMode {
-    Builtin,
-    Entrypoint,
-}
-
-impl fmt::Display for CurrentUserMode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match &self {
-            CurrentUserMode::Builtin => "builtin",
-            CurrentUserMode::Entrypoint => "entrypoint",
-        };
-        write!(f, "{}", s)
-    }
-}
-
-#[derive(Clone)]
 pub struct CurrentUser {
     name: String,
     uid: String,
