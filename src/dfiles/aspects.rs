@@ -81,20 +81,18 @@ impl ContainerAspect for PulseAudio {
         .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        vec![
-            DockerfileSnippet {
-                order: 70,
-                content: String::from(
-                    r#"RUN apt-get update && apt-get install -y \
+        vec![DockerfileSnippet {
+            order: 70,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libavcodec-extra \
     libpulse0 \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,
-                ),
-            },
-        ]
+            ),
+        }]
     }
     fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
         let uid = users::get_current_uid();
@@ -538,10 +536,14 @@ USER={user}"#,
     }
 }
 
-// TODO: Locale should detect the host's locale settings and transfer those into the container at
-// build time; should probably be configurable by command line flag but we don't yet support
-// built-time command line flags and I'm feeling really lazy and just want to dispense entirely
-// with my old base docker images so for now it's only configurable at compile time.
+/// Locale defaults to the buildtime specified locale (obtained from config). At runtime it will be
+/// overridden by one of the following (in order of preference):
+/// * LC_ALL env var
+/// * LC_CTYPE env var
+/// * LANG env var
+/// * dfiles profile config
+/// * dfiles app config
+/// * dfiles global config
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Locale {
     pub language: String,
@@ -566,6 +568,37 @@ ENV LANG={locale}"#,
                 codeset = self.codeset,
             ),
         }]
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        let mut snippets = Vec::new();
+        let mut locale = String::from(self);
+        if let Some(value) = env::var("LC_ALL")
+            .ok()
+            .or_else(|| env::var("LC_CTYPE").ok())
+            .or_else(|| env::var("LANG").ok())
+        {
+            locale = value;
+        }
+
+        snippets.push(entrypoint::ScriptSnippet {
+            description: "set a non-default entrypoint snippet".to_string(),
+            order: 80,
+            snippet: String::from(format!(
+                r#"echo '{locale} {codeset}' > /etc/locale.gen
+locale-gen
+echo LANG="{locale}" > /etc/default/locale
+export LANG={locale}"#,
+                locale = locale,
+                codeset = self.codeset,
+            )),
+        });
+        Ok(snippets)
+    }
+}
+
+impl From<&Locale> for String {
+    fn from(l: &Locale) -> String {
+        format!("{0}_{1}.{2}", l.language, l.territory, l.codeset).to_string()
     }
 }
 
