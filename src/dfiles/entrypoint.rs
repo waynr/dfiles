@@ -84,7 +84,7 @@ pub(crate) fn setup(
     }
 
     write_scripts(&tmpdir, scripts)?;
-    println!("{}", tmpdir.display());
+    log::trace!("entrypoint tmpdir: {}", tmpdir.display());
     run_args(&tmpdir)
 }
 

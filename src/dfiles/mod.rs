@@ -5,3 +5,4 @@ pub mod dirs;
 pub mod docker;
 pub mod entrypoint;
 pub mod error;
+pub mod logging;

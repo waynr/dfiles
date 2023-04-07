@@ -14,6 +14,7 @@ use tempfile::NamedTempFile;
 use super::aspects;
 use super::config;
 use super::docker;
+use super::logging;
 use super::entrypoint;
 use super::error::{Error, Result};
 
@@ -90,8 +91,9 @@ impl ContainerManager {
     fn run(&self, matches: &ArgMatches) -> Result<()> {
         let mut args: Vec<String> = vec!["--rm"].into_iter().map(String::from).collect();
 
+        log::debug!("active dfiles aspects:");
         for aspect in &self.aspects {
-            println!("{:}", aspect);
+            log::debug!("{:}", aspect);
             args.extend(aspect.run_args(Some(&matches))?);
         }
 
@@ -106,8 +108,9 @@ impl ContainerManager {
     fn cmd(&self, matches: &ArgMatches) -> Result<()> {
         let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
 
+        log::debug!("active dfiles aspects:");
         for aspect in &self.aspects {
-            println!("{:}", aspect);
+            log::debug!("{:}", aspect);
             args.extend(aspect.run_args(Some(&matches))?);
         }
 
@@ -228,7 +231,12 @@ impl ContainerManager {
         let generate_archive = SubCommand::with_name("generate-archive")
             .about("generate archive used to build container");
 
-        let mut app = App::new(&self.name).version("0.0");
+        let mut app = App::new(&self.name).version("0.0").arg(
+            Arg::with_name("verbose")
+                .short("v")
+                .long("verbose")
+                .multiple(true),
+        );
 
         self.aspects.insert(
             0,
@@ -277,6 +285,10 @@ impl ContainerManager {
             .subcommand(generate_archive);
 
         let matches = app.get_matches();
+
+        let level = matches.occurrences_of("verbose");
+        logging::setup(level)?;
+
         let (subc, subm) = matches.subcommand();
 
         if let Some(v) = subm {

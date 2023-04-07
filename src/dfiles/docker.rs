@@ -26,14 +26,14 @@ pub fn build(opts: &BuildOptions) {
             }
             Ok(())
         })
-        .map_err(|e| eprintln!("Error: {}", e));
+        .map_err(|e| log::error!("Error: {}", e));
 
     tokio::run(fut);
 }
 
 pub fn run(args: Vec<String>) {
     let cmdstr: String = args.join(" ");
-    println!("docker run {}", cmdstr);
+    log::debug!("docker run {}", cmdstr);
 
     let mut child = Command::new("docker")
         .arg("run")

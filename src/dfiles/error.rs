@@ -38,6 +38,9 @@ pub enum Error {
     #[error("directory")]
     DockerError(#[from] dockworker::errors::Error),
 
+    #[error("log initialization error: {0}")]
+    SetLoggerError(#[from] log::SetLoggerError),
+
     #[error("failed to save config to file")]
     FailedToSaveConfig,
 
