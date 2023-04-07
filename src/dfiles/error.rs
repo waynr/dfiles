@@ -11,6 +11,9 @@ pub enum Error {
     #[error("generic io error")]
     IOError(#[from] std::io::Error),
 
+    #[error("generic fmt error")]
+    FmtError(#[from] std::fmt::Error),
+
     #[error("could not find current binary")]
     CouldNotFindCurrentBinary(String),
 

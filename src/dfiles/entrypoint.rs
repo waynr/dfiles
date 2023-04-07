@@ -1,3 +1,4 @@
+use std::fmt::Write as _;
 use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
@@ -32,28 +33,54 @@ fn run_args(tmpdir: &Path) -> Result<Vec<String>> {
     Ok(args)
 }
 
-fn write_scripts(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathBuf> {
+fn prefix_script_output(prefix: &str) -> String {
+    format!(
+        r#"### prefix output of entrypoint commands
+exec > >(trap "" INT TERM; sed 's/^/{0}(stdout): /')
+exec 2> >(trap "" INT TERM; sed 's/^/{0}(stderr): /' >&2)
+"#,
+        prefix
+    )
+    .to_string()
+}
+fn write_script(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathBuf> {
     let path = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT);
     std::fs::create_dir_all(path.parent().unwrap())?;
-    let mut file = std::fs::File::create(&path)?;
 
-    write!(file, "#!/usr/bin/env bash\n")?;
-    write!(file, "\nUSER=root\n")?;
+    let mut buffer = String::new();
+
+    write!(
+        buffer,
+        r#"#!/usr/bin/env bash
+USER=root
+(
+{0}
+"#,
+        prefix_script_output("entrypoint.bash"),
+    )?;
+
     scripts.sort_by(|a, b| a.order.partial_cmp(&b.order).unwrap());
     for script in scripts {
-        write!(file, "\n")?;
+        write!(buffer, "\n")?;
         for line in script.description.lines() {
-            write!(file, "# {0}\n", line)?;
+            write!(buffer, "### {0}\n", line)?;
         }
 
-        write!(file, "{0}\n", script.snippet)?;
+        write!(buffer, "{0}\n", script.snippet)?;
     }
-    write!(file, "\n# execute whatever command was specified\n")?;
-    write!(file, "sudo --user $USER $@\n")?;
+    write!(buffer, ")")?;
+    write!(buffer, "\n# execute whatever command was specified\n")?;
+    write!(buffer, "sudo --user $USER $@")?;
 
+    let mut file = std::fs::File::create(&path)?;
     let mut perms = file.metadata()?.permissions();
     perms.set_mode(0o700);
     file.set_permissions(perms)?;
+
+    write!(file, "{}", buffer)?;
+    for line in buffer.lines() {
+        log::debug!("{}|{}", ENTRYPOINT_SETUP_SCRIPT, line);
+    }
 
     Ok(path)
 }
@@ -83,7 +110,7 @@ pub(crate) fn setup(
         return result;
     }
 
-    write_scripts(&tmpdir, scripts)?;
+    write_script(&tmpdir, scripts)?;
     log::trace!("entrypoint tmpdir: {}", tmpdir.display());
     run_args(&tmpdir)
 }
@@ -101,8 +128,7 @@ pub fn group_setup(group_name: &str) -> Result<ScriptSnippet> {
         order: 5,
         description: "configure video group for container user".to_string(),
         snippet: String::from(format!(
-            r#"
-adduser {user} {group_name}
+            r#"adduser {user} {group_name}
 groupmod -g {video_gid} {group_name}
         "#,
             user = name,
