@@ -1,6 +1,5 @@
 use dockworker;
 use thiserror;
-use which;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -56,7 +55,4 @@ pub enum Error {
 
     #[error("local entrypoint path must be absolute")]
     LocalEntrypointPathMustBeAbsolute,
-
-    #[error("failed to find binary")]
-    WhichError(#[from] which::Error),
 }
