@@ -681,6 +681,24 @@ RUN echo {tz} > /etc/timezone
         let args: Vec<String> = vec!["-e".to_string(), format!("TZ={0}", timezone).to_string()];
         Ok(args)
     }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        let tz = env::var("LC_ALL").ok().unwrap_or(self.0.clone());
+        Ok(vec![
+            entrypoint::ScriptSnippet {
+                description: "configure timezone based on TZ variable in host".to_string(),
+                order: 60,
+                snippet: String::from(format!(
+                    r#"
+                r#"export TZ={tz}
+ln -snf /usr/share/zoneinfo/{tz} /etc/localtime
+echo {tz} > /etc/timezone
+"#,
+                    tz = tz,
+                )),
+            },
+            entrypoint::group_setup("audio")?,
+        ])
+    }
 }
 
 impl TryFrom<&str> for Timezone {
