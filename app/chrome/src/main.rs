@@ -113,15 +113,12 @@ fn main() -> Result<()> {
             Box::new(aspects::SysAdmin {}),
             Box::new(aspects::Shm {}),
         ],
-        vec![
-            "google-chrome",
-            &format!("--user-data-dir={}", data_dir),
-        ]
-        .into_iter()
-        .map(String::from)
-        .collect(),
+        vec!["google-chrome", &format!("--user-data-dir={}", data_dir)]
+            .into_iter()
+            .map(String::from)
+            .collect(),
         Some(String::from("bullseye")),
-    );
+    )?;
 
     mgr.execute().context("executing chrome in container")
 }

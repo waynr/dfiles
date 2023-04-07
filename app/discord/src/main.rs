@@ -14,18 +14,19 @@ impl aspects::ContainerAspect for Discord {
     }
 
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
-        vec![aspects::DockerfileSnippet {
-            order: 91,
-            content: format!(
-                r#"WORKDIR /opt/
+        vec![
+            aspects::DockerfileSnippet {
+                order: 91,
+                content: format!(
+                    r#"WORKDIR /opt/
 RUN curl https://dl.discordapp.net/apps/linux/0.0.25/discord-0.0.25.deb > /opt/discord.deb && \
     dpkg --force-depends -i /opt/discord.deb  ; rm /opt/discord.deb
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,
-            ),
-        },
+                ),
+            },
             aspects::DockerfileSnippet {
                 order: 92,
                 content: String::from(
@@ -65,7 +66,7 @@ fn main() -> Result<()> {
         ],
         vec!["discord"].into_iter().map(String::from).collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing discord in container")
 }

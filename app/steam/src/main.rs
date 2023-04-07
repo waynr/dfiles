@@ -23,7 +23,7 @@ RUN apt-get update && yes 'I AGREE' | apt-get install -y \
         steam \
     && apt-get purge --autoremove \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb 
+    && rm -rf /src/*.deb
 RUN chmod 4755 /opt/Signal/chrome-sandox"#,
             ),
         }]
@@ -56,7 +56,7 @@ fn main() -> Result<()> {
             .map(String::from)
             .collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing steam in container")
 }

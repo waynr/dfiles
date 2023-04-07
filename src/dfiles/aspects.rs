@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use users;
 
 use super::dirs;
+use super::entrypoint;
 use super::error::{Error, Result};
 
 pub struct DockerfileSnippet {
@@ -37,6 +38,9 @@ pub trait ContainerAspect: dyn_clone::DynClone {
     }
     fn container_files(&self) -> Vec<ContainerFile> {
         Vec::new()
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(Vec::new())
     }
 }
 
@@ -77,35 +81,29 @@ impl ContainerAspect for PulseAudio {
         .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        vec![
-            DockerfileSnippet {
-                order: 75,
-                content: String::from(
-                    r#"COPY /etc/pulse/client.conf /etc/pulse/client.conf
-RUN chmod 655 /etc/pulse
-RUN chmod 644 /etc/pulse/client.conf"#,
-                ),
-            },
-            DockerfileSnippet {
-                order: 70,
-                content: String::from(
-                    r#"RUN apt-get update && apt-get install -y \
+        vec![DockerfileSnippet {
+            order: 70,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libavcodec-extra \
     libpulse0 \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,
-                ),
-            },
-        ]
+            ),
+        }]
     }
-    fn container_files(&self) -> Vec<ContainerFile> {
-        vec![ContainerFile {
-            container_path: String::from("./etc/pulse/client.conf"),
-            contents: String::from(
-                "# Connect to the host's server using the mounted UNIX socket
-default-server = unix:/run/user/11571/pulse/native
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        let uid = users::get_current_uid();
+        Ok(vec![
+            entrypoint::ScriptSnippet {
+                description: "configure pulseaudio client to connect to host daemon".to_string(),
+                order: 50,
+                snippet: String::from(format!(
+                    r#"cat << EOF > /etc/pulse/client.conf
+# Connect to the host's server using the mounted UNIX socket
+default-server = unix:/run/user/{uid}/pulse/native
 
 # Prevent a server running in the container
 autospawn = no
@@ -113,10 +111,15 @@ daemon-binary = /bin/true
 
 # Prevent the use of shared memory
 enable-shm = false
-            ",
-            )
-            .into(),
-        }]
+EOF
+
+chmod 655 /etc/pulse
+chmod 644 /etc/pulse/client.conf"#,
+                    uid = uid,
+                )),
+            },
+            entrypoint::group_setup("audio")?,
+        ])
     }
 }
 
@@ -131,6 +134,9 @@ impl ContainerAspect for Alsa {
             .into_iter()
             .map(String::from)
             .collect())
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(vec![entrypoint::group_setup("audio")?])
     }
 }
 
@@ -198,11 +204,10 @@ impl ContainerAspect for Video {
             .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        vec![
-            DockerfileSnippet {
-                order: 72,
-                content: String::from(
-                    r#"RUN apt-get update && apt-get install -y \
+        vec![DockerfileSnippet {
+            order: 72,
+            content: String::from(
+                r#"RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     libpci3 \
     libpciaccess0 \
@@ -213,6 +218,9 @@ impl ContainerAspect for Video {
   && rm -rf /src/*.deb "#,
             ),
         }]
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        Ok(vec![entrypoint::group_setup("video")?])
     }
 }
 
@@ -292,17 +300,6 @@ impl ContainerAspect for SysAdmin {
             .into_iter()
             .map(String::from)
             .collect())
-    }
-}
-
-#[derive(Clone)]
-pub struct TTY {}
-impl ContainerAspect for TTY {
-    fn name(&self) -> String {
-        String::from("TTY")
-    }
-    fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
-        Ok(vec!["-i", "-t"].into_iter().map(String::from).collect())
     }
 }
 
@@ -478,9 +475,6 @@ impl ContainerAspect for Name {
 #[derive(Clone)]
 pub struct CurrentUser {
     name: String,
-    uid: String,
-    group: String,
-    gid: String,
 }
 
 impl CurrentUser {
@@ -489,6 +483,21 @@ impl CurrentUser {
     }
 
     pub fn detect() -> Result<Self> {
+        let uid = users::get_current_uid();
+        let name = match users::get_user_by_uid(uid) {
+            Some(n) => n.name().to_string_lossy().to_string(),
+            None => return Err(Error::MissingUser(uid.to_string())),
+        };
+        Ok(Self { name })
+    }
+}
+
+impl ContainerAspect for CurrentUser {
+    fn name(&self) -> String {
+        format!("User: {}", &self.name)
+    }
+
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
         let uid = users::get_current_uid();
         let gid = users::get_current_gid();
         let name = match users::get_user_by_uid(uid) {
@@ -499,59 +508,42 @@ impl CurrentUser {
             Some(g) => g.name().to_string_lossy().to_string(),
             None => return Err(Error::MissingGroup(gid.to_string())),
         };
-        Ok(CurrentUser {
-            name: name,
-            uid: uid.to_string(),
-            group: group,
-            gid: gid.to_string(),
-        })
+        Ok(vec![entrypoint::ScriptSnippet {
+            description: format!("create a user named {}", self.name),
+            order: 02,
+            snippet: format!(
+                r#"addgroup --gid {gid} {group}
+useradd --home-dir /home/{user} \
+    --shell /bin/bash \
+    --uid {uid} \
+    --gid {gid} \
+    {user}
+
+# NOTE: I don't remember why this was necessary...
+adduser {user} tty
+
+mkdir -p /data /home/{user}
+chown {user}:{group} /data /home/{user}
+
+cd /home/{user}
+USER={user}"#,
+                gid = gid,
+                group = group,
+                user = name,
+                uid = uid,
+            ),
+        }])
     }
 }
 
-impl ContainerAspect for CurrentUser {
-    fn name(&self) -> String {
-        format!("User: {}", &self.name)
-    }
-    fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
-        vec![
-            DockerfileSnippet {
-                order: 80,
-                content: format!(
-                    r#"RUN addgroup --gid {gid} {group} \
-    &&  adduser --home /home/{user} \
-                --shell /bin/bash \
-                --uid {uid} \
-                --gid {gid} \
-                --disabled-password {user}
-RUN adduser {user} audio
-RUN adduser {user} tty
-RUN adduser {user} video
-RUN mkdir -p /data && chown {user}.{user} /data
-RUN mkdir -p /home/{user} && chown {user}.{user} /home/{user}
-"#,
-                    gid = &self.gid,
-                    group = &self.group,
-                    user = &self.name,
-                    uid = &self.uid,
-                ),
-            },
-            DockerfileSnippet {
-                order: 98,
-                content: format!(
-                    r#"USER {user}
-WORKDIR /home/{user}
-"#,
-                    user = &self.name
-                ),
-            },
-        ]
-    }
-}
-
-// TODO: Locale should detect the host's locale settings and transfer those into the container at
-// build time; should probably be configurable by command line flag but we don't yet support
-// built-time command line flags and I'm feeling really lazy and just want to dispense entirely
-// with my old base docker images so for now it's only configurable at compile time.
+/// Locale defaults to the buildtime specified locale (obtained from config). At runtime it will be
+/// overridden by one of the following (in order of preference):
+/// * LC_ALL env var
+/// * LC_CTYPE env var
+/// * LANG env var
+/// * dfiles profile config
+/// * dfiles app config
+/// * dfiles global config
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Locale {
     pub language: String,
@@ -576,6 +568,37 @@ ENV LANG={locale}"#,
                 codeset = self.codeset,
             ),
         }]
+    }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        let mut snippets = Vec::new();
+        let mut locale = String::from(self);
+        if let Some(value) = env::var("LC_ALL")
+            .ok()
+            .or_else(|| env::var("LC_CTYPE").ok())
+            .or_else(|| env::var("LANG").ok())
+        {
+            locale = value;
+        }
+
+        snippets.push(entrypoint::ScriptSnippet {
+            description: "set a non-default entrypoint snippet".to_string(),
+            order: 80,
+            snippet: String::from(format!(
+                r#"echo '{locale} {codeset}' > /etc/locale.gen
+locale-gen
+echo LANG="{locale}" > /etc/default/locale
+export LANG={locale}"#,
+                locale = locale,
+                codeset = self.codeset,
+            )),
+        });
+        Ok(snippets)
+    }
+}
+
+impl From<&Locale> for String {
+    fn from(l: &Locale) -> String {
+        format!("{0}_{1}.{2}", l.language, l.territory, l.codeset).to_string()
     }
 }
 
@@ -658,12 +681,33 @@ RUN echo {tz} > /etc/timezone
         let args: Vec<String> = vec!["-e".to_string(), format!("TZ={0}", timezone).to_string()];
         Ok(args)
     }
+    fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
+        let tz = env::var("LC_ALL").ok().unwrap_or(self.0.clone());
+        Ok(vec![
+            entrypoint::ScriptSnippet {
+                description: "configure timezone based on TZ variable in host".to_string(),
+                order: 60,
+                snippet: String::from(format!(
+                    r#"
+                r#"export TZ={tz}
+ln -snf /usr/share/zoneinfo/{tz} /etc/localtime
+echo {tz} > /etc/timezone
+"#,
+                    tz = tz,
+                )),
+            },
+            entrypoint::group_setup("audio")?,
+        ])
+    }
 }
 
 impl TryFrom<&str> for Timezone {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
-        let _ = tzdata::Timezone::new(value)?;
-        Ok(Timezone(value.to_string()))
+    fn try_from(input: &str) -> Result<Self> {
+        let tz = input.to_string();
+        match tzdata::Timezone::new(input) {
+            Ok(_) => Ok(Timezone(tz)),
+            Err(_) => Err(Error::InvalidTimezone(tz)),
+        }
     }
 }

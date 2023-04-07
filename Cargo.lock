@@ -356,15 +356,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "darktable"
-version = "4.0.0"
-dependencies = [
- "anyhow",
- "clap",
- "dfiles",
-]
-
-[[package]]
 name = "dfiles"
 version = "0.1.0"
 dependencies = [
@@ -383,6 +374,7 @@ dependencies = [
  "tokio",
  "tzdata",
  "users",
+ "which",
 ]
 
 [[package]]
@@ -1133,15 +1125,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
 dependencies = [
  "unicode-ident",
-]
-
-[[package]]
-name = "qcad"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "dfiles",
 ]
 
 [[package]]
@@ -1936,6 +1919,15 @@ name = "wasm-bindgen-shared"
 version = "0.2.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c38c045535d93ec4f0b4defec448e4291638ee608530863b1e2ba115d4fff7f"
+
+[[package]]
+name = "which"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d011071ae14a2f6671d0b74080ae0cd8ebf3a6f8c9589a2cd45f23126fe29724"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "winapi"

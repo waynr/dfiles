@@ -54,7 +54,8 @@ RUN chmod 755 /usr/local/bin/run-skype-and-wait-for-exit"#,
                 contents: r#"#!/bin/bash
 skypeforlinux
 sleep 3
-while ps -C skypeforlinux >/dev/null;do sleep 3;done "#.into(),
+while ps -C skypeforlinux >/dev/null;do sleep 3;done "#
+                    .into(),
             },
             aspects::ContainerFile {
                 container_path: String::from("./etc/fonts/local.conf"),
@@ -91,7 +92,8 @@ while ps -C skypeforlinux >/dev/null;do sleep 3;done "#.into(),
 <bool>false</bool>
 </edit>
 </match>
-</fontconfig>"#.into(),
+</fontconfig>"#
+                    .into(),
             },
         ]
     }
@@ -123,7 +125,7 @@ fn main() -> Result<()> {
             .map(String::from)
             .collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing skype in container")
 }

@@ -2,8 +2,6 @@ use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 use dockworker::{ContainerBuildOptions, Docker};
@@ -16,6 +14,7 @@ use tempfile::NamedTempFile;
 use super::aspects;
 use super::config;
 use super::docker;
+use super::entrypoint;
 use super::error::{Error, Result};
 
 #[derive(Deserialize, Debug)]
@@ -29,9 +28,29 @@ pub struct ContainerManager {
     container_paths: Vec<String>,
     aspects: Vec<Box<dyn aspects::ContainerAspect>>,
     args: Vec<String>,
+    tempdir: tempfile::TempDir,
 }
 
 impl ContainerManager {
+    pub fn default(
+        name: String,
+        tags: Vec<String>,
+        container_paths: Vec<String>,
+        aspects: Vec<Box<dyn aspects::ContainerAspect>>,
+        args: Vec<String>,
+    ) -> Result<ContainerManager> {
+        let tempdir = tempfile::Builder::new()
+            .prefix(&format!("dfiles-{}-{}-", name, std::process::id()))
+            .tempdir()?;
+        Ok(ContainerManager {
+            name: name.clone(),
+            tags,
+            container_paths,
+            aspects,
+            args,
+            tempdir,
+        })
+    }
     pub fn default_debian(
         name: String,
         tags: Vec<String>,
@@ -39,19 +58,13 @@ impl ContainerManager {
         mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
         args: Vec<String>,
         version: Option<String>,
-    ) -> ContainerManager {
+    ) -> Result<ContainerManager> {
         let aspect = match version {
             None => String::from("buster"),
             Some(s) => s,
         };
         aspects.insert(0, Box::new(Debian { version: aspect }));
-        ContainerManager {
-            name: name,
-            tags: tags,
-            container_paths: container_paths,
-            aspects: aspects,
-            args: args,
-        }
+        Self::default(name, tags, container_paths, aspects, args)
     }
 
     pub fn default_ubuntu(
@@ -61,65 +74,17 @@ impl ContainerManager {
         mut aspects: Vec<Box<dyn aspects::ContainerAspect>>,
         args: Vec<String>,
         version: Option<String>,
-    ) -> ContainerManager {
+    ) -> Result<ContainerManager> {
         let aspect = match version {
             None => String::from("20.04"),
             Some(s) => s,
         };
         aspects.insert(0, Box::new(Ubuntu { version: aspect }));
-        ContainerManager {
-            name: name,
-            tags: tags,
-            container_paths: container_paths,
-            aspects: aspects,
-            args: args,
-        }
+        Self::default(name, tags, container_paths, aspects, args)
     }
 
     fn image(&self) -> String {
         self.tags[0].clone()
-    }
-
-    fn entrypoint_args(&self, matches: &ArgMatches) -> Result<Vec<String>> {
-        let mut args: Vec<String> = vec!["-it", "--rm"].into_iter().map(String::from).collect();
-
-        if let Some(c) = matches.value_of("entrypoint") {
-            args.extend_from_slice(&["--entrypoint".to_string(), c.to_string()]);
-        }
-
-        if let Some(s) = matches.value_of("local-entrypoint") {
-            // check if local_path exists and meets all the requirements of an entrypoint script
-            let local_path = Path::new(s);
-
-            if !local_path.is_absolute() {
-                return Err(Error::LocalEntrypointPathMustBeAbsolute);
-            }
-
-            if !local_path.exists() {
-                return Err(Error::LocalEntrypointPathMustExist);
-            }
-
-            if !local_path.is_file() {
-                return Err(Error::LocalEntrypointPathMustBeARegularFile);
-            }
-
-            let mode = local_path.metadata()?.permissions().mode();
-
-            if mode & 0o500 != 0o500 {
-                return Err(Error::LocalEntrypointPathMustBeExecutable);
-            }
-
-            // construct entrypoint-related arguments
-            let container_path = "/entrypoint.sh";
-            args.extend_from_slice(&[
-                "-v".to_string(),
-                format!("{}:{}", s, container_path).to_string(),
-                "--entrypoint".to_string(),
-                container_path.to_string(),
-            ]);
-        }
-
-        Ok(args)
     }
 
     fn run(&self, matches: &ArgMatches) -> Result<()> {
@@ -130,9 +95,8 @@ impl ContainerManager {
             args.extend(aspect.run_args(Some(&matches))?);
         }
 
-        let entrypoint_args = self.entrypoint_args(matches)?;
-
-        args.extend_from_slice(&entrypoint_args);
+        let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
+        args.extend(ep_args);
         args.push(self.image().to_string());
         args.extend_from_slice(&self.args);
         docker::run(args);
@@ -152,9 +116,8 @@ impl ContainerManager {
             Some(s) => s.map(|s| s.to_string()).collect(),
         };
 
-        let entrypoint_args = self.entrypoint_args(matches)?;
-
-        args.extend_from_slice(&entrypoint_args);
+        let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
+        args.extend(ep_args);
         args.push(self.image().to_string());
         args.extend_from_slice(command.as_slice());
 
@@ -217,7 +180,7 @@ impl ContainerManager {
     }
 
     fn generate_archive(&self) -> Result<()> {
-        let mut tar_file = File::create("whatever.tar")?;
+        let mut tar_file = File::create(format!("{}.tar", self.name))?;
         self.generate_archive_impl(&mut tar_file)
     }
 
@@ -279,28 +242,6 @@ impl ContainerManager {
             run = run.arg(arg);
             cmd = cmd.arg(arg);
             config = config.arg(arg);
-        }
-
-        let ep_args = vec![
-            Arg::with_name("entrypoint")
-                .takes_value(true)
-                .short("e")
-                .long("entrypoint")
-                .help("specify the entrypoint command of the container"),
-
-            Arg::with_name("local-entrypoint")
-                .takes_value(true)
-                .conflicts_with("entrypoint")
-                .long("local-entrypoint")
-                .help("specify the entrypoint command of the container"),
-        ];
-
-        for arg in ep_args.clone() {
-            cmd = cmd.arg(arg);
-        }
-
-        for arg in ep_args {
-            run = run.arg(arg);
         }
 
         cmd = cmd.arg(
@@ -412,6 +353,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     locales \
     lsof \
     procps \
+    sudo \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
   && rm -rf /src/*.deb "#,

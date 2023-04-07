@@ -72,7 +72,7 @@ fn main() -> Result<()> {
         .map(String::from)
         .collect(),
         Some(String::from("bookworm")),
-    );
+    )?;
 
     mgr.execute().context("executing firefox in container")
 }

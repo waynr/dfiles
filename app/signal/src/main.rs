@@ -67,7 +67,7 @@ fn main() -> Result<()> {
             .map(String::from)
             .collect(),
         None,
-    );
+    )?;
 
     mgr.execute().context("executing signal in container")
 }
