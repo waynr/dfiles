@@ -33,16 +33,6 @@ fn run_args(tmpdir: &Path) -> Result<Vec<String>> {
     Ok(args)
 }
 
-fn prefix_script_output(prefix: &str) -> String {
-    format!(
-        r#"### prefix output of entrypoint commands
-exec > >(trap "" INT TERM; sed 's/^/{0}(stdout): /')
-exec 2> >(trap "" INT TERM; sed 's/^/{0}(stderr): /' >&2)
-"#,
-        prefix
-    )
-    .to_string()
-}
 fn write_script(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathBuf> {
     let path = tmpdir.join(ENTRYPOINT_SETUP_SCRIPT);
     std::fs::create_dir_all(path.parent().unwrap())?;
@@ -52,11 +42,7 @@ fn write_script(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathBu
     write!(
         buffer,
         r#"#!/usr/bin/env bash
-USER=root
-(
-{0}
-"#,
-        prefix_script_output("entrypoint.bash"),
+USER=root"#
     )?;
 
     scripts.sort_by(|a, b| a.order.partial_cmp(&b.order).unwrap());
@@ -68,7 +54,6 @@ USER=root
 
         write!(buffer, "{0}\n", script.snippet)?;
     }
-    write!(buffer, ")")?;
     write!(buffer, "\n# execute whatever command was specified\n")?;
     write!(buffer, "sudo --user $USER $@")?;
 
