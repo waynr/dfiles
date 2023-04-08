@@ -688,8 +688,7 @@ RUN echo {tz} > /etc/timezone
                 description: "configure timezone based on TZ variable in host".to_string(),
                 order: 60,
                 snippet: String::from(format!(
-                    r#"
-                r#"export TZ={tz}
+                    r#"export TZ={tz}
 ln -snf /usr/share/zoneinfo/{tz} /etc/localtime
 echo {tz} > /etc/timezone
 "#,
