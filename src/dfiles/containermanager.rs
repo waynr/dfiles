@@ -14,9 +14,9 @@ use tempfile::NamedTempFile;
 use super::aspects;
 use super::config;
 use super::docker;
-use super::logging;
 use super::entrypoint;
 use super::error::{Error, Result};
+use super::logging;
 
 #[derive(Deserialize, Debug)]
 struct BuildOutput {
