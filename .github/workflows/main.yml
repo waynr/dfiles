@@ -70,7 +70,7 @@ jobs:
     needs: build-setup
     strategy:
       matrix:
-        app: ${{ needs.build-setup.outputs.app-names }}
+        app: ${{ fromJson(needs.build-setup.outputs.app-names) }}
     steps:
       - name: check out repository
         uses: actions/checkout@v3
