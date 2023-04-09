@@ -54,24 +54,20 @@ jobs:
   build-setup:
     runs-on: ubuntu-latest
     outputs:
-      app-names: ${{ steps.step1.outputs.app-names }}
+      output1: ${{ steps.step1.outputs.test }}
     steps:
       - name: check out repository
         uses: actions/checkout@v3
       - id: get-app-names
-        uses: devorbitus/yq-action-output@v1.0
-        with:
-          cmd: tomlq -r '.workspace.members[]' Cargo.toml
-      - id: set-app-names-output
-        run: echo "app-names=$(echo \"${{ steps.get-app-names.outputs.result }}\" | cut -d\/ -f2)" >> "$GITHUB_OUTPUT"
-
+        run: |
+          tomlq -r '.workspace.members[]' Cargo.toml | cut -d\/ -f2 >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
     needs: build-setup
     strategy:
       matrix:
-        app: ${{ needs.build-setup.outputs.app-names }}
+        app: ${{ needs.setup.outputs.get-app-names }}
     steps:
       - name: check out repository
         uses: actions/checkout@v3
