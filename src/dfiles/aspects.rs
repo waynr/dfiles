@@ -100,7 +100,7 @@ impl ContainerAspect for PulseAudio {
             entrypoint::ScriptSnippet {
                 description: "configure pulseaudio client to connect to host daemon".to_string(),
                 order: 50,
-                snippet: String::from(format!(
+                snippet: format!(
                     r#"cat << EOF > /etc/pulse/client.conf
 # Connect to the host's server using the mounted UNIX socket
 default-server = unix:/run/user/{uid}/pulse/native
@@ -116,7 +116,7 @@ EOF
 chmod 655 /etc/pulse
 chmod 644 /etc/pulse/client.conf"#,
                     uid = uid,
-                )),
+                ),
             },
             entrypoint::group_setup("audio")?,
         ])
@@ -188,7 +188,7 @@ impl ContainerAspect for Video {
             .filter_map(std::result::Result::ok)
             .filter(|entry| match entry.path().file_name() {
                 Some(x) => match x.to_os_string().into_string() {
-                    Ok(x) => x.starts_with(&"video"),
+                    Ok(x) => x.starts_with("video"),
                     Err(_) => false,
                 },
                 None => false,
@@ -199,8 +199,7 @@ impl ContainerAspect for Video {
 
         Ok(video_devices
             .iter()
-            .map(|s| vec![String::from("--device"), s.to_string()])
-            .flatten()
+            .flat_map(|s| vec![String::from("--device"), s.to_string()])
             .collect())
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
@@ -510,7 +509,7 @@ impl ContainerAspect for CurrentUser {
         };
         Ok(vec![entrypoint::ScriptSnippet {
             description: format!("create a user named {}", self.name),
-            order: 02,
+            order: 2,
             snippet: format!(
                 r#"addgroup --gid {gid} {group}
 useradd --home-dir /home/{user} \
@@ -553,7 +552,7 @@ pub struct Locale {
 
 impl ContainerAspect for Locale {
     fn name(&self) -> String {
-        format!("AutoLocale")
+        "AutoLocale".to_string()
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         let locale = format!("{}_{}.{}", self.language, self.territory, self.codeset);
@@ -583,14 +582,14 @@ ENV LANG={locale}"#,
         snippets.push(entrypoint::ScriptSnippet {
             description: "set a non-default entrypoint snippet".to_string(),
             order: 80,
-            snippet: String::from(format!(
+            snippet: format!(
                 r#"echo '{locale} {codeset}' > /etc/locale.gen
 locale-gen
 echo LANG="{locale}" > /etc/default/locale
 export LANG={locale}"#,
                 locale = locale,
                 codeset = self.codeset,
-            )),
+            ),
         });
         Ok(snippets)
     }
@@ -598,7 +597,7 @@ export LANG={locale}"#,
 
 impl From<&Locale> for String {
     fn from(l: &Locale) -> String {
-        format!("{0}_{1}.{2}", l.language, l.territory, l.codeset).to_string()
+        format!("{0}_{1}.{2}", l.language, l.territory, l.codeset)
     }
 }
 
@@ -656,7 +655,7 @@ pub struct Timezone(pub String);
 
 impl ContainerAspect for Timezone {
     fn name(&self) -> String {
-        format!("Timezone")
+        "Timezone".to_string()
     }
     fn dockerfile_snippets(&self) -> Vec<DockerfileSnippet> {
         vec![DockerfileSnippet {
@@ -678,7 +677,7 @@ RUN echo {tz} > /etc/timezone
             }
         }
 
-        let args: Vec<String> = vec!["-e".to_string(), format!("TZ={0}", timezone).to_string()];
+        let args: Vec<String> = vec!["-e".to_string(), format!("TZ={0}", timezone)];
         Ok(args)
     }
     fn entrypoint_snippets(&self) -> Result<Vec<entrypoint::ScriptSnippet>> {
@@ -687,13 +686,13 @@ RUN echo {tz} > /etc/timezone
             entrypoint::ScriptSnippet {
                 description: "configure timezone based on TZ variable in host".to_string(),
                 order: 60,
-                snippet: String::from(format!(
+                snippet: format!(
                     r#"export TZ={tz}
 ln -snf /usr/share/zoneinfo/{tz} /etc/localtime
 echo {tz} > /etc/timezone
 "#,
                     tz = tz,
-                )),
+                ),
             },
             entrypoint::group_setup("audio")?,
         ])
