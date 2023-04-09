@@ -23,7 +23,8 @@ RUN curl https://dl.discordapp.net/apps/linux/0.0.25/discord-0.0.25.deb > /opt/d
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && rm -rf /src/*.deb "#.to_string(),
+  && rm -rf /src/*.deb "#
+                    .to_string(),
             },
             aspects::DockerfileSnippet {
                 order: 92,

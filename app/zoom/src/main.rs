@@ -22,7 +22,8 @@ RUN curl -L https://zoom.us/client/latest/zoom_amd64.deb -o /opt/zoom_amd64.deb 
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && rm -rf /src/*.deb "#.to_string(),
+  && rm -rf /src/*.deb "#
+                .to_string(),
         }]
     }
 }

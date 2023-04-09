@@ -23,7 +23,8 @@ impl aspects::ContainerAspect for Thinkorswim {
 RUN apt-get update && apt-get install -y --no-install-recommends \
         openjdk-11-jre \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb"#.to_string(),
+    && rm -rf /src/*.deb"#
+                    .to_string(),
             },
             aspects::DockerfileSnippet {
                 order: 91,

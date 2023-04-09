@@ -278,10 +278,7 @@ mod merge_should {
             merge(&empty, &Some(right.clone()), false),
             Some(vec![5, 6, 7])
         );
-        assert_eq!(
-            merge(&empty, &Some(right), true),
-            Some(vec![5, 6, 7])
-        );
+        assert_eq!(merge(&empty, &Some(right), true), Some(vec![5, 6, 7]));
     }
 
     #[test]
