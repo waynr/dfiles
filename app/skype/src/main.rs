@@ -25,8 +25,7 @@ RUN chmod 644 /etc/fonts/local.conf"#,
             },
             aspects::DockerfileSnippet {
                 order: 91,
-                content: format!(
-                    r#"# Add the skype debian repo
+                content: r#"# Add the skype debian repo
 RUN curl -sSL https://repo.skype.com/data/SKYPE-GPG-KEY | apt-key add -
 RUN echo "deb [arch=amd64] https://repo.skype.com/deb stable main" > /etc/apt/sources.list.d/skype.list
 
@@ -35,15 +34,12 @@ RUN apt-get update && apt-get -y install \
         skypeforlinux \
     && apt-get purge --autoremove \
     && rm -rf /var/lib/apt/lists/*
-"#,
-                ),
+"#.to_string(),
             },
             aspects::DockerfileSnippet {
                 order: 92,
-                content: format!(
-                    r#"COPY /run-skype-and-wait-for-exit /usr/local/bin
-RUN chmod 755 /usr/local/bin/run-skype-and-wait-for-exit"#,
-                ),
+                content: r#"COPY /run-skype-and-wait-for-exit /usr/local/bin
+RUN chmod 755 /usr/local/bin/run-skype-and-wait-for-exit"#.to_string(),
             },
         ]
     }

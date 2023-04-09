@@ -16,15 +16,13 @@ impl aspects::ContainerAspect for Zoom {
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
         vec![aspects::DockerfileSnippet {
             order: 91,
-            content: format!(
-                r#"WORKDIR /opt/
+            content: r#"WORKDIR /opt/
 RUN curl -L https://zoom.us/client/latest/zoom_amd64.deb -o /opt/zoom_amd64.deb && \
     dpkg --force-depends -i /opt/zoom_amd64.deb && rm /opt/zoom_amd64.deb
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && rm -rf /src/*.deb "#,
-            ),
+  && rm -rf /src/*.deb "#.to_string(),
         }]
     }
 }

@@ -269,17 +269,17 @@ mod merge_should {
         );
 
         assert_eq!(
-            merge(&Some(left.clone()), &empty.clone(), false),
+            merge(&Some(left.clone()), &empty, false),
             Some(vec![1, 2, 3, 4])
         );
-        assert_eq!(merge(&Some(left.clone()), &empty.clone(), true), None);
+        assert_eq!(merge(&Some(left), &empty, true), None);
 
         assert_eq!(
-            merge(&empty.clone(), &Some(right.clone()), false),
+            merge(&empty, &Some(right.clone()), false),
             Some(vec![5, 6, 7])
         );
         assert_eq!(
-            merge(&empty.clone(), &Some(right.clone()), true),
+            merge(&empty, &Some(right), true),
             Some(vec![5, 6, 7])
         );
     }
@@ -289,16 +289,16 @@ mod merge_should {
         let none: Option<Vec<i32>> = None;
         let empty: Option<Vec<i32>> = Some(Vec::new());
 
-        assert_eq!(merge(&none.clone(), &none.clone(), true), None);
-        assert_eq!(merge(&none.clone(), &none.clone(), false), None);
+        assert_eq!(merge(&none, &none, true), None);
+        assert_eq!(merge(&none, &none, false), None);
 
-        assert_eq!(merge(&none.clone(), &empty.clone(), true), None);
-        assert_eq!(merge(&none.clone(), &empty.clone(), false), None);
+        assert_eq!(merge(&none, &empty, true), None);
+        assert_eq!(merge(&none, &empty, false), None);
 
-        assert_eq!(merge(&empty.clone(), &empty.clone(), true), None);
-        assert_eq!(merge(&empty.clone(), &empty.clone(), false), None);
+        assert_eq!(merge(&empty, &empty, true), None);
+        assert_eq!(merge(&empty, &empty, false), None);
 
-        assert_eq!(merge(&empty.clone(), &none.clone(), true), None);
-        assert_eq!(merge(&empty.clone(), &none.clone(), false), None);
+        assert_eq!(merge(&empty, &none, true), None);
+        assert_eq!(merge(&empty, &none, false), None);
     }
 }

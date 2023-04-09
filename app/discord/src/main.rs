@@ -17,15 +17,13 @@ impl aspects::ContainerAspect for Discord {
         vec![
             aspects::DockerfileSnippet {
                 order: 91,
-                content: format!(
-                    r#"WORKDIR /opt/
+                content: r#"WORKDIR /opt/
 RUN curl https://dl.discordapp.net/apps/linux/0.0.25/discord-0.0.25.deb > /opt/discord.deb && \
     dpkg --force-depends -i /opt/discord.deb  ; rm /opt/discord.deb
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
   && rm -rf /var/lib/apt/lists/* \
-  && rm -rf /src/*.deb "#,
-                ),
+  && rm -rf /src/*.deb "#.to_string(),
             },
             aspects::DockerfileSnippet {
                 order: 92,

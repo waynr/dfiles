@@ -16,16 +16,14 @@ impl aspects::ContainerAspect for Steam {
     fn dockerfile_snippets(&self) -> Vec<aspects::DockerfileSnippet> {
         vec![aspects::DockerfileSnippet {
             order: 91,
-            content: format!(
-                r#"RUN dpkg --add-architecture i386
+            content: r#"RUN dpkg --add-architecture i386
 RUN sed -i -e 's|main|main contrib non-free|' /etc/apt/sources.list
 RUN apt-get update && yes 'I AGREE' | apt-get install -y \
         steam \
     && apt-get purge --autoremove \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /src/*.deb
-RUN chmod 4755 /opt/Signal/chrome-sandox"#,
-            ),
+RUN chmod 4755 /opt/Signal/chrome-sandox"#.to_string(),
         }]
     }
 }

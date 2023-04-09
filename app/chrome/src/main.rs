@@ -17,8 +17,7 @@ impl aspects::ContainerAspect for Chrome {
         vec![
             aspects::DockerfileSnippet {
                 order: 91,
-                content: format!(
-                    r#"
+                content: r#"
 ADD https://dl.google.com/linux/direct/google-talkplugin_current_amd64.deb /src/google-talkplugin_current_amd64.deb
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpango1.0-0 \
@@ -36,8 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && dpkg -i /src/google-talkplugin_current_amd64.deb \
     && apt-get purge --auto-remove -y curl \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb"#,
-                ),
+    && rm -rf /src/*.deb"#.to_string(),
             },
             aspects::DockerfileSnippet {
                 order: 75,
