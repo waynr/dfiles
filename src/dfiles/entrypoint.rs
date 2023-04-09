@@ -73,20 +73,13 @@ pub(crate) fn setup(
     tmpdir: &Path,
     aspects: &[Box<dyn aspects::ContainerAspect>],
 ) -> Result<Vec<String>> {
-    let mut result = Ok(Vec::<String>::new());
     let scripts: Vec<ScriptSnippet> = aspects
         .iter()
-        .map_while(|a| match a.entrypoint_snippets() {
-            Ok(v) => Some(v),
-            Err(e) => {
-                result = Err(e);
-                None
-            }
-        })
+        .map(|a| a.entrypoint_snippets())
+        .collect::<Result<Vec<Vec<_>>>>()?
+        .into_iter()
         .flatten()
         .collect();
-
-    result?;
 
     if scripts.is_empty() {
         return Ok(Vec::<String>::new());
