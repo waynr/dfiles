@@ -63,7 +63,7 @@ jobs:
           pip install yq
       - id: get-app-names
         run: |
-          echo "app-names=$(tomlq -r '.workspace.members[]' Cargo.toml | cut -d\/ -f2 | tr \"\n\" \" \")" >> "$GITHUB_OUTPUT"
+          echo "app-names=$(tomlq -r '.workspace.members[]' Cargo.toml | cut -d\/ -f2 | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
