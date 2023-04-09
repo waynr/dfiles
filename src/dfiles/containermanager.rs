@@ -44,7 +44,7 @@ impl ContainerManager {
             .prefix(&format!("dfiles-{}-{}-", name, std::process::id()))
             .tempdir()?;
         Ok(ContainerManager {
-            name: name.clone(),
+            name,
             tags,
             container_paths,
             aspects,
@@ -94,12 +94,12 @@ impl ContainerManager {
         log::debug!("active dfiles aspects:");
         for aspect in &self.aspects {
             log::debug!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches))?);
+            args.extend(aspect.run_args(Some(matches))?);
         }
 
         let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
         args.extend(ep_args);
-        args.push(self.image().to_string());
+        args.push(self.image());
         args.extend_from_slice(&self.args);
         docker::run(args);
         Ok(())
@@ -111,7 +111,7 @@ impl ContainerManager {
         log::debug!("active dfiles aspects:");
         for aspect in &self.aspects {
             log::debug!("{:}", aspect);
-            args.extend(aspect.run_args(Some(&matches))?);
+            args.extend(aspect.run_args(Some(matches))?);
         }
 
         let command: Vec<String> = match matches.values_of("command") {
@@ -121,7 +121,7 @@ impl ContainerManager {
 
         let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
         args.extend(ep_args);
-        args.push(self.image().to_string());
+        args.push(self.image());
         args.extend_from_slice(command.as_slice());
 
         docker::run(args);
@@ -130,7 +130,7 @@ impl ContainerManager {
 
     fn build(&self) -> Result<()> {
         let mut tar_file = NamedTempFile::new()?;
-        self.generate_archive_impl(&mut tar_file.as_file_mut())?;
+        self.generate_archive_impl(tar_file.as_file_mut())?;
 
         let docker = Docker::connect_with_defaults()?;
         let options = ContainerBuildOptions {
@@ -177,7 +177,7 @@ impl ContainerManager {
             dockerfile_contents.push('\n');
         }
 
-        add_file_to_archive(&mut a, "Dockerfile", &dockerfile_contents.as_bytes())?;
+        add_file_to_archive(&mut a, "Dockerfile", dockerfile_contents.as_bytes())?;
 
         Ok(())
     }
@@ -292,14 +292,14 @@ impl ContainerManager {
         let (subc, subm) = matches.subcommand();
 
         if let Some(v) = subm {
-            self.load_config(&v)?;
+            self.load_config(v)?;
         }
 
         match (subc, subm) {
-            ("run", Some(subm)) => self.run(&subm),
-            ("cmd", Some(subm)) => self.cmd(&subm),
+            ("run", Some(subm)) => self.run(subm),
+            ("cmd", Some(subm)) => self.cmd(subm),
             ("build", _) => self.build(),
-            ("config", Some(subm)) => self.config(&subm),
+            ("config", Some(subm)) => self.config(subm),
             ("generate-archive", _) => self.generate_archive(),
             (_, _) => Ok(println!("{}", matches.usage())),
         }
