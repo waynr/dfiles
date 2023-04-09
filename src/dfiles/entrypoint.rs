@@ -47,14 +47,13 @@ USER=root"#
 
     scripts.sort_by(|a, b| a.order.partial_cmp(&b.order).unwrap());
     for script in scripts {
-        write!(buffer, "\n")?;
         for line in script.description.lines() {
-            write!(buffer, "### {0}\n", line)?;
+            writeln!(buffer, "### {0}", line)?;
         }
 
-        write!(buffer, "{0}\n", script.snippet)?;
+        writeln!(buffer, "{0}", script.snippet)?;
     }
-    write!(buffer, "\n# execute whatever command was specified\n")?;
+    writeln!(buffer, "\n# execute whatever command was specified")?;
     write!(buffer, "sudo --user $USER $@")?;
 
     let mut file = std::fs::File::create(&path)?;
@@ -72,9 +71,9 @@ USER=root"#
 
 pub(crate) fn setup(
     tmpdir: &Path,
-    aspects: &Vec<Box<dyn aspects::ContainerAspect>>,
+    aspects: &[Box<dyn aspects::ContainerAspect>],
 ) -> Result<Vec<String>> {
-    let mut result = Ok(Vec::new());
+    let mut result = Ok(Vec::<String>::new());
     let scripts: Vec<ScriptSnippet> = aspects
         .iter()
         .map_while(|a| match a.entrypoint_snippets() {
@@ -87,17 +86,15 @@ pub(crate) fn setup(
         .flatten()
         .collect();
 
-    if let Err(_) = result {
-        return result;
+    result?;
+
+    if scripts.is_empty() {
+        return Ok(Vec::<String>::new());
     }
 
-    if scripts.len() == 0 {
-        return result;
-    }
-
-    write_script(&tmpdir, scripts)?;
+    write_script(tmpdir, scripts)?;
     log::trace!("entrypoint tmpdir: {}", tmpdir.display());
-    run_args(&tmpdir)
+    run_args(tmpdir)
 }
 
 pub fn group_setup(group_name: &str) -> Result<ScriptSnippet> {
@@ -112,13 +109,13 @@ pub fn group_setup(group_name: &str) -> Result<ScriptSnippet> {
     Ok(ScriptSnippet {
         order: 5,
         description: "configure video group for container user".to_string(),
-        snippet: String::from(format!(
+        snippet: format!(
             r#"adduser {user} {group_name}
 groupmod -g {video_gid} {group_name}
         "#,
             user = name,
             group_name = video_group.name().to_string_lossy(),
             video_gid = video_group.gid(),
-        )),
+        ),
     })
 }
