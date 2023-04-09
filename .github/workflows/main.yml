@@ -63,7 +63,7 @@ jobs:
           pip install yq
       - id: get-app-names
         run: |
-          echo "app-names=$(tomlq -r '.workspace.members[]' Cargo.toml | cut -d\/ -f2 | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          echo "app-names=\"$(tomlq -c '.workspace.members[]' Cargo.toml)\"" >> "$GITHUB_OUTPUT"
 
   build:
     runs-on: ubuntu-latest
@@ -74,7 +74,11 @@ jobs:
     steps:
       - name: check out repository
         uses: actions/checkout@v3
+      - name: extract app name from matrix variable
+        id: get-name
+        run: |
+          echo "app-name=$(echo ${{matrix.app}} | cut -d\/ -f2)" >> "$GITHUB_OUTPUT"
       - name: build
         run: |
-          cargo build -p ${{ matrix.app }}
-          ./target/debug/${{ matrix.app }} build
+          cargo build -p ${{ steps.get-name.outputs.app-name }}
+          ./target/debug/${{ steps.get-name.outputs.app-name }} build
