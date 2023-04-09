@@ -54,7 +54,7 @@ jobs:
   build-setup:
     runs-on: ubuntu-latest
     outputs:
-      app-names: ${{ steps.step1.outputs.app-names }}
+      app-names: ${{ steps.get-app-names.outputs.app-names }}
     steps:
       - name: check out repository
         uses: actions/checkout@v3
