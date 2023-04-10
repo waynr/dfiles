@@ -18,12 +18,13 @@ impl aspects::ContainerAspect for Steam {
             order: 91,
             content: r#"RUN dpkg --add-architecture i386
 RUN sed -i -e 's|main|main contrib non-free|' /etc/apt/sources.list
+RUN echo steam steam/question select "I AGREE" | sudo debconf-set-selections
+RUN echo steam steam/license note '' | sudo debconf-set-selections
 RUN apt-get update && yes 'I AGREE' | apt-get install -y \
         steam \
     && apt-get purge --autoremove \
     && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /src/*.deb
-RUN chmod 4755 /opt/Signal/chrome-sandox"#
+    && rm -rf /src/*.deb"#
                 .to_string(),
         }]
     }
@@ -36,7 +37,7 @@ fn main() -> Result<()> {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut mgr = ContainerManager::default_debian(
-        "stream".to_string(),
+        "steam".to_string(),
         vec![format!("{}:{}", "waynr/steam", version)],
         vec![container_path],
         vec![
