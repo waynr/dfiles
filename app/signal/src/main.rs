@@ -44,31 +44,40 @@ impl aspects::ContainerAspect for Signal {
     }
 }
 
+impl Signal {
+    pub fn container_manager() -> Result<ContainerManager> {
+        let home = env::var("HOME").expect("HOME must be set");
+        let container_path = format!("{}/.config/Signal/", home);
+
+        Ok(ContainerManager::default_debian(
+            "signal".to_string(),
+            vec![String::from("waynr/signal:v0")],
+            vec![container_path],
+            vec![
+                Box::new(Signal {}),
+                Box::new(aspects::Name("signal".to_string())),
+                Box::new(aspects::PulseAudio {}),
+                Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
+                Box::new(aspects::X11 {}),
+                Box::new(aspects::Video {}),
+                Box::new(aspects::DBus {}),
+                Box::new(aspects::SysAdmin {}),
+            ],
+            vec!["/opt/Signal/signal-desktop"]
+                .into_iter()
+                .map(String::from)
+                .collect(),
+            None,
+        )
+        .context("initializing signal container manager")?)
+    }
+}
+
 fn main() -> Result<()> {
-    let home = env::var("HOME").expect("HOME must be set");
-    let container_path = format!("{}/.config/Signal/", home);
-
-    let mut mgr = ContainerManager::default_debian(
-        "signal".to_string(),
-        vec![String::from("waynr/signal:v0")],
-        vec![container_path],
-        vec![
-            Box::new(Signal {}),
-            Box::new(aspects::Name("signal".to_string())),
-            Box::new(aspects::PulseAudio {}),
-            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
-            Box::new(aspects::X11 {}),
-            Box::new(aspects::Video {}),
-            Box::new(aspects::DBus {}),
-            Box::new(aspects::SysAdmin {}),
-        ],
-        vec!["/opt/Signal/signal-desktop"]
-            .into_iter()
-            .map(String::from)
-            .collect(),
-        None,
-    )?;
-
-    let cli = &mut mgr.cli()?;
-    mgr.execute(cli).context("executing signal in container")
+    let mut mgr = Signal::container_manager()?;
+    let cli = &mut mgr
+        .cli()
+        .context(format!("initializing {0} cli Command", mgr.name()))?;
+    mgr.execute(cli)
+        .context(format!("executing {0} in container", mgr.name()))
 }

@@ -28,33 +28,42 @@ RUN apt-get update && apt-get --fix-broken install -y \
     }
 }
 
+impl Zoom {
+    fn container_manager() -> Result<ContainerManager> {
+        let home = env::var("HOME").expect("HOME must be set");
+
+        let version = env!("CARGO_PKG_VERSION");
+
+        Ok(ContainerManager::default_debian(
+            "zoom".to_string(),
+            vec![format!("{}:{}", "waynr/zoom", version)],
+            vec![
+                format!("{}/.zoom/", home),
+                format!("{}/.config/zoomus.conf", home),
+            ],
+            vec![
+                Box::new(Zoom {}),
+                Box::new(aspects::Name("zoom".to_string())),
+                Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
+                Box::new(aspects::PulseAudio {}),
+                Box::new(aspects::X11 {}),
+                Box::new(aspects::Video {}),
+                Box::new(aspects::DBus {}),
+                Box::new(aspects::SysAdmin {}),
+                Box::new(aspects::Shm {}),
+            ],
+            vec!["zoom"].into_iter().map(String::from).collect(),
+            None,
+        )
+        .context("initializing zoom container manager")?)
+    }
+}
+
 fn main() -> Result<()> {
-    let home = env::var("HOME").expect("HOME must be set");
-
-    let version = env!("CARGO_PKG_VERSION");
-
-    let mut mgr = ContainerManager::default_debian(
-        "zoom".to_string(),
-        vec![format!("{}:{}", "waynr/zoom", version)],
-        vec![
-            format!("{}/.zoom/", home),
-            format!("{}/.config/zoomus.conf", home),
-        ],
-        vec![
-            Box::new(Zoom {}),
-            Box::new(aspects::Name("zoom".to_string())),
-            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
-            Box::new(aspects::PulseAudio {}),
-            Box::new(aspects::X11 {}),
-            Box::new(aspects::Video {}),
-            Box::new(aspects::DBus {}),
-            Box::new(aspects::SysAdmin {}),
-            Box::new(aspects::Shm {}),
-        ],
-        vec!["zoom"].into_iter().map(String::from).collect(),
-        None,
-    )?;
-
-    let cli = &mut mgr.cli()?;
-    mgr.execute(cli).context("executing zoom in container")
+    let mut mgr = Zoom::container_manager()?;
+    let cli = &mut mgr
+        .cli()
+        .context(format!("initializing {0} cli Command", mgr.name()))?;
+    mgr.execute(cli)
+        .context(format!("executing {0} in container", mgr.name()))
 }

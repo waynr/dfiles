@@ -312,6 +312,10 @@ impl ContainerManager {
             None => Ok(println!("{}", app.render_usage())),
         }
     }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 fn add_file_to_archive<W: Write>(b: &mut Builder<W>, name: &str, contents: &[u8]) -> Result<()> {

@@ -44,36 +44,45 @@ RUN ln -sf /opt/firefox/firefox-bin /usr/local/bin/firefox"#,
     }
 }
 
+impl Firefox {
+    pub fn container_manager() -> Result<ContainerManager> {
+        let home = env::var("HOME").expect("HOME must be set");
+        let container_path = format!("{}/.mozilla/firefox/profile", home);
+
+        Ok(ContainerManager::default_debian(
+            "firefox".to_string(),
+            vec![format!("{}:{}", "waynr/firefox", VERSION)],
+            vec![container_path.clone()],
+            vec![
+                Box::new(Firefox {}),
+                Box::new(aspects::Name("firefox".to_string())),
+                Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
+                Box::new(aspects::PulseAudio {}),
+                Box::new(aspects::X11 {}),
+                Box::new(aspects::Video {}),
+                Box::new(aspects::DBus {}),
+                Box::new(aspects::Shm {}),
+            ],
+            vec![
+                "/opt/firefox/firefox-bin",
+                "--no-remote",
+                "--profile",
+                &container_path,
+            ]
+            .into_iter()
+            .map(String::from)
+            .collect(),
+            Some(String::from("bookworm")),
+        )
+        .context("initializing firefox container manager")?)
+    }
+}
+
 fn main() -> Result<()> {
-    let home = env::var("HOME").expect("HOME must be set");
-    let container_path = format!("{}/.mozilla/firefox/profile", home);
-
-    let mut mgr = ContainerManager::default_debian(
-        "firefox".to_string(),
-        vec![format!("{}:{}", "waynr/firefox", VERSION)],
-        vec![container_path.clone()],
-        vec![
-            Box::new(Firefox {}),
-            Box::new(aspects::Name("firefox".to_string())),
-            Box::new(aspects::CurrentUser::detect().context("detecting current user")?),
-            Box::new(aspects::PulseAudio {}),
-            Box::new(aspects::X11 {}),
-            Box::new(aspects::Video {}),
-            Box::new(aspects::DBus {}),
-            Box::new(aspects::Shm {}),
-        ],
-        vec![
-            "/opt/firefox/firefox-bin",
-            "--no-remote",
-            "--profile",
-            &container_path,
-        ]
-        .into_iter()
-        .map(String::from)
-        .collect(),
-        Some(String::from("bookworm")),
-    )?;
-
-    let cli = &mut mgr.cli()?;
-    mgr.execute(cli).context("executing firefox in container")
+    let mut mgr = Firefox::container_manager()?;
+    let cli = &mut mgr
+        .cli()
+        .context(format!("initializing {0} cli Command", mgr.name()))?;
+    mgr.execute(cli)
+        .context(format!("executing {0} in container", mgr.name()))
 }

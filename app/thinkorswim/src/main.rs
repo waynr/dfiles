@@ -60,44 +60,53 @@ ENTRYPOINT ["/run-thinkorswim.sh"]
     }
 }
 
+impl Thinkorswim {
+    pub fn container_manager() -> Result<ContainerManager> {
+        let home = env::var("HOME").expect("HOME must be set");
+
+        let version = env!("CARGO_PKG_VERSION");
+
+        let current_user = aspects::CurrentUser::detect().context("detecting current user")?;
+        let tos = Thinkorswim {
+            user_name: current_user.name(),
+        };
+
+        let thinkorswim_install_dir = format!("{}/thinkorswim", home);
+        Ok(ContainerManager::default_debian(
+            "thinkorswim".to_string(),
+            vec![format!("{}:{}", "waynr/thinkorswim", version)],
+            vec![
+                format!("{}/.thinkorswim", home),
+                format!("{}/.java", home),
+                format!("{}/.install4j", home),
+                thinkorswim_install_dir.clone(),
+                format!(
+                    "{}/.com.devexperts.tos.ui.user.login.ThinkOrSwimApplication",
+                    home
+                ),
+            ],
+            vec![
+                Box::new(tos),
+                Box::new(aspects::Name("thinkorswim".to_string())),
+                Box::new(current_user),
+                Box::new(aspects::PulseAudio {}),
+                Box::new(aspects::X11 {}),
+                Box::new(aspects::Video {}),
+                Box::new(aspects::DBus {}),
+                Box::new(aspects::Shm {}),
+            ],
+            vec![format!("{}/thinkorswim", thinkorswim_install_dir)],
+            Some(String::from("bullseye")),
+        )
+        .context("initializing thinkorswim container manager")?)
+    }
+}
+
 fn main() -> Result<()> {
-    let home = env::var("HOME").expect("HOME must be set");
-
-    let version = env!("CARGO_PKG_VERSION");
-
-    let current_user = aspects::CurrentUser::detect().context("detecting current user")?;
-    let tos = Thinkorswim {
-        user_name: current_user.name(),
-    };
-
-    let thinkorswim_install_dir = format!("{}/thinkorswim", home);
-    let mut mgr = ContainerManager::default_debian(
-        "thinkorswim".to_string(),
-        vec![format!("{}:{}", "waynr/thinkorswim", version)],
-        vec![
-            format!("{}/.thinkorswim", home),
-            format!("{}/.java", home),
-            format!("{}/.install4j", home),
-            thinkorswim_install_dir.clone(),
-            format!(
-                "{}/.com.devexperts.tos.ui.user.login.ThinkOrSwimApplication",
-                home
-            ),
-        ],
-        vec![
-            Box::new(tos),
-            Box::new(aspects::Name("thinkorswim".to_string())),
-            Box::new(current_user),
-            Box::new(aspects::PulseAudio {}),
-            Box::new(aspects::X11 {}),
-            Box::new(aspects::Video {}),
-            Box::new(aspects::DBus {}),
-            Box::new(aspects::Shm {}),
-        ],
-        vec![format!("{}/thinkorswim", thinkorswim_install_dir)],
-        Some(String::from("bullseye")),
-    )?;
-
-    let cli = &mut mgr.cli()?;
-    mgr.execute(cli).context("executing thinkorswim in container")
+    let mut mgr = Thinkorswim::container_manager()?;
+    let cli = &mut mgr
+        .cli()
+        .context(format!("initializing {0} cli Command", mgr.name()))?;
+    mgr.execute(cli)
+        .context(format!("executing {0} in container", mgr.name()))
 }
