@@ -6,15 +6,15 @@ edition = "2018"
 
 [workspace]
 members = [
-  "app/chrome",
-  "app/discord",
-  "app/drawio",
-  "app/firefox",
-  "app/signal",
-  "app/skype",
-  "app/steam",
-  "app/thinkorswim",
-  "app/zoom",
+  "dfiles-apps/chrome",
+  "dfiles-apps/discord",
+  "dfiles-apps/drawio",
+  "dfiles-apps/firefox",
+  "dfiles-apps/signal",
+  "dfiles-apps/skype",
+  "dfiles-apps/steam",
+  "dfiles-apps/thinkorswim",
+  "dfiles-apps/zoom",
 ]
 
 [lib]
