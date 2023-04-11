@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
-use std::str::FromStr;
 use std::fmt;
 use std::path::Path;
+use std::str::FromStr;
 use std::{env, fs};
 
 use clap::{Arg, ArgAction, ArgMatches};
