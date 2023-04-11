@@ -290,17 +290,23 @@ impl ContainerManager {
         logging::setup(*level)?;
 
         match matches.subcommand() {
-            Some((cmd, subm)) => {
-                self.load_config(subm)?;
-                match cmd {
-                    "run" => self.run(subm),
-                    "cmd" => self.cmd(subm),
-                    "build" => self.build(),
-                    "config" => self.config(subm),
-                    "generate-archive" => self.generate_archive(),
-                    &_ => Ok(println!("{}", app.render_usage())),
+            Some((cmd, subm)) => match cmd {
+                "build" => self.build(),
+                "run" => {
+                    self.load_config(subm)?;
+                    self.run(subm)
                 }
-            }
+                "cmd" => {
+                    self.load_config(subm)?;
+                    self.cmd(subm)
+                }
+                "config" => {
+                    self.load_config(subm)?;
+                    self.config(subm)
+                }
+                "generate-archive" => self.generate_archive(),
+                &_ => Ok(println!("{}", app.render_usage())),
+            },
             None => Ok(println!("{}", app.render_usage())),
         }
     }
