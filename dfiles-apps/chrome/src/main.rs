@@ -2,8 +2,8 @@ use std::env;
 
 use anyhow::{Context, Result};
 
-use dfiles::aspects;
-use dfiles::containermanager::ContainerManager;
+use dfiles_core::aspects;
+use dfiles_core::containermanager::ContainerManager;
 
 #[derive(Clone)]
 pub struct Chrome {}

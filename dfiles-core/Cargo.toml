@@ -1,0 +1,31 @@
+[package]
+name = "dfiles-core"
+version = "0.1.0"
+authors = ["Wayne Warren <wayne.warren.s@gmail.com>"]
+edition = "2021"
+
+
+[lib]
+name = "dfiles_core"
+path = "src/dfiles/mod.rs"
+
+[dependencies]
+
+dockworker = "0.1"
+tar = "0.4.26"
+
+log = "0.4"
+pretty_env_logger = "0.4"
+
+clap = { version = "4.2", features = ["string"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.8"
+
+thiserror = "1.0"
+
+tempfile = "3.1.0"
+users = "0.10.0"
+chrono-tz = "0.8"
+directories-next = "1.0"
+dyn-clone = "1.0"
