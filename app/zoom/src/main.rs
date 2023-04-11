@@ -55,5 +55,6 @@ fn main() -> Result<()> {
         None,
     )?;
 
-    mgr.execute().context("executing zoom in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing zoom in container")
 }

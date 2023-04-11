@@ -63,5 +63,6 @@ fn main() -> Result<()> {
         None,
     )?;
 
-    mgr.execute().context("executing drawio in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing drawio in container")
 }

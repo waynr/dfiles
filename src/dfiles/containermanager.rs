@@ -223,7 +223,7 @@ impl ContainerManager {
         Ok(())
     }
 
-    pub fn execute(&mut self) -> Result<()> {
+    pub fn cli(&mut self) -> Result<Command> {
         let mut run = Command::new("run").about("run app in container");
         let mut cmd = Command::new("cmd").about("run specified command in container");
         let mut build = Command::new("build").about("build app container");
@@ -231,7 +231,7 @@ impl ContainerManager {
         let generate_archive =
             Command::new("generate-archive").about("generate archive used to build container");
 
-        let mut app = Command::new(&self.name).version("0.0").arg(
+        let app = Command::new(&self.name).version("0.0").arg(
             Arg::new("verbose")
                 .short('v')
                 .long("verbose")
@@ -277,13 +277,15 @@ impl ContainerManager {
             }
         }
 
-        app = app
+        Ok(app
             .subcommand(run)
             .subcommand(cmd)
             .subcommand(build)
             .subcommand(config)
-            .subcommand(generate_archive);
+            .subcommand(generate_archive))
+    }
 
+    pub fn execute(&mut self, app: &mut Command) -> Result<()> {
         let matches = app.get_matches_mut();
 
         let level = matches.get_one("verbose").unwrap_or(&0u8);

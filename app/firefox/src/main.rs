@@ -74,5 +74,6 @@ fn main() -> Result<()> {
         Some(String::from("bookworm")),
     )?;
 
-    mgr.execute().context("executing firefox in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing firefox in container")
 }

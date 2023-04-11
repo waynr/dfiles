@@ -98,5 +98,6 @@ fn main() -> Result<()> {
         Some(String::from("bullseye")),
     )?;
 
-    mgr.execute().context("executing thinkorswim in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing thinkorswim in container")
 }

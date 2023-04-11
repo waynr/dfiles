@@ -118,5 +118,6 @@ fn main() -> Result<()> {
         Some(String::from("bullseye")),
     )?;
 
-    mgr.execute().context("executing chrome in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing chrome in container")
 }

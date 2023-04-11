@@ -69,5 +69,6 @@ fn main() -> Result<()> {
         None,
     )?;
 
-    mgr.execute().context("executing signal in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing signal in container")
 }

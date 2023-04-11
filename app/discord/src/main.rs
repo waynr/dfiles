@@ -67,5 +67,6 @@ fn main() -> Result<()> {
         None,
     )?;
 
-    mgr.execute().context("executing discord in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing discord in container")
 }

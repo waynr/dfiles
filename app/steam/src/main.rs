@@ -58,5 +58,6 @@ fn main() -> Result<()> {
         None,
     )?;
 
-    mgr.execute().context("executing steam in container")
+    let cli = &mut mgr.cli()?;
+    mgr.execute(cli).context("executing steam in container")
 }
