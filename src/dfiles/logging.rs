@@ -1,7 +1,7 @@
 use crate::error::Result;
 use log::LevelFilter;
 
-pub fn setup(level: u64) -> Result<()> {
+pub fn setup(level: u8) -> Result<()> {
     let level = match level {
         0 => LevelFilter::Info,
         1 => LevelFilter::Debug,

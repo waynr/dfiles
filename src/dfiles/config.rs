@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 use std::fs;
 use std::io::Write;
 
-use clap::{Arg, ArgMatches};
+use clap::{Arg, ArgAction, ArgMatches};
 use serde::{Deserialize, Serialize};
 
 use super::aspects;
@@ -137,38 +137,44 @@ impl Config {
     }
 }
 
-impl TryFrom<&ArgMatches<'_>> for Config {
+impl TryFrom<&ArgMatches> for Config {
     type Error = Error;
     fn try_from(matches: &ArgMatches) -> Result<Self> {
         let mut cfg = Config::empty();
 
-        if let Some(vs) = matches.values_of("mount") {
-            let mut mounts: Vec<aspects::Mount> = Vec::new();
-            for v in vs {
-                mounts.push(aspects::Mount::try_from(v)?);
-            }
-            cfg.mounts = Some(mounts);
-        }
+        cfg.mounts = matches
+            .get_many::<String>("mount")
+            .map(|values_ref| {
+                values_ref
+                    .map(aspects::Mount::try_from)
+                    .collect::<Result<Vec<aspects::Mount>>>()
+            })
+            .transpose()?;
 
-        if let Some(tz) = matches.value_of("timezone") {
-            cfg.timezone = Some(aspects::Timezone::try_from(tz)?);
-        }
+        cfg.timezone = matches
+            .get_one::<String>("timezone")
+            .map(aspects::Timezone::try_from)
+            .transpose()?;
 
-        if let Some(memory) = matches.value_of("memory") {
-            cfg.memory = Some(aspects::Memory::try_from(memory)?);
-        }
+        cfg.memory = matches
+            .get_one::<String>("memory")
+            .map(aspects::Memory::try_from)
+            .transpose()?;
 
-        if let Some(cpu_shares) = matches.value_of("cpu-shares") {
-            cfg.cpu_shares = Some(aspects::CPUShares::try_from(cpu_shares)?);
-        }
+        cfg.cpu_shares = matches
+            .get_one::<String>("cpu-shares")
+            .map(aspects::CPUShares::try_from)
+            .transpose()?;
 
-        if let Some(network) = matches.value_of("network") {
-            cfg.network = Some(aspects::Network::try_from(network)?);
-        }
+        cfg.network = matches
+            .get_one::<String>("network")
+            .map(aspects::Network::try_from)
+            .transpose()?;
 
-        if let Some(locale) = matches.value_of("locale") {
-            cfg.locale = Some(aspects::Locale::try_from(locale)?);
-        }
+        cfg.locale = matches
+            .get_one::<String>("locale")
+            .map(aspects::Locale::try_from)
+            .transpose()?;
 
         Ok(cfg)
     }
@@ -199,34 +205,33 @@ fn merge<T: Clone>(
     }
 }
 
-pub fn cli_args<'a, 'b>() -> Vec<Arg<'a, 'b>> {
+pub fn cli_args<'a, 'b>() -> Vec<Arg> {
     vec![
-        Arg::with_name("mount")
-            .short("m")
+        Arg::new("mount")
+            .short('m')
             .long("mount")
-            .multiple(true)
-            .takes_value(true)
+            .action(ArgAction::Append)
             .help("specify a local path to be mapped into the container filesystem at runtime"),
-        Arg::with_name("timezone")
-            .short("t")
+        Arg::new("timezone")
+            .short('t')
             .long("timezone")
-            .takes_value(true)
+            .action(ArgAction::Set)
             .help("specify the timezone to be built into the container image"),
-        Arg::with_name("memory")
+        Arg::new("memory")
             .long("memory")
-            .takes_value(true)
+            .action(ArgAction::Set)
             .help("specify the runtime memory resource limit"),
-        Arg::with_name("cpu-shares")
+        Arg::new("cpu-shares")
             .long("cpu-shares")
-            .takes_value(true)
+            .action(ArgAction::Set)
             .help("specify the runtime proportion of cpu cycles for the container"),
-        Arg::with_name("network")
+        Arg::new("network")
             .long("network")
-            .takes_value(true)
+            .action(ArgAction::Set)
             .help("specify the runtime network mode for the container (default: bridge)"),
-        Arg::with_name("locale")
+        Arg::new("locale")
             .long("locale")
-            .takes_value(true)
+            .action(ArgAction::Set)
             .help("specify the locale in the form <language>_<territory>.<codeset> for the container (default: en_US.UTF8)"),
     ]
 }

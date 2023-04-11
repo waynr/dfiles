@@ -44,6 +44,9 @@ pub enum Error {
     #[error("log initialization error: {0}")]
     SetLoggerError(#[from] log::SetLoggerError),
 
+    #[error("retrieving argument value: {0}")]
+    MatchesError(#[from] clap::parser::MatchesError),
+
     #[error("failed to save config to file")]
     FailedToSaveConfig,
 

@@ -3,7 +3,7 @@ use std::fmt;
 use std::path::Path;
 use std::{env, fs};
 
-use clap::{Arg, ArgMatches};
+use clap::{Arg, ArgAction, ArgMatches};
 use dyn_clone;
 use serde::{Deserialize, Serialize};
 use users;
@@ -279,9 +279,9 @@ impl ContainerAspect for Network {
     }
 }
 
-impl TryFrom<&str> for Network {
+impl TryFrom<&String> for Network {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
+    fn try_from(value: &String) -> Result<Self> {
         Ok(Network {
             mode: value.to_string(),
         })
@@ -330,9 +330,9 @@ impl ContainerAspect for CPUShares {
     }
 }
 
-impl TryFrom<&str> for CPUShares {
+impl TryFrom<&String> for CPUShares {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
+    fn try_from(value: &String) -> Result<Self> {
         Ok(CPUShares(value.to_string()))
     }
 }
@@ -351,9 +351,9 @@ impl ContainerAspect for Memory {
     }
 }
 
-impl TryFrom<&str> for Memory {
+impl TryFrom<&String> for Memory {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
+    fn try_from(value: &String) -> Result<Self> {
         Ok(Memory(value.to_string()))
     }
 }
@@ -369,10 +369,10 @@ impl ContainerAspect for Profile {
     }
 
     fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
-        let mut profile = "default";
+        let mut profile = &String::from("default");
         if let Some(m) = matches {
-            if let Some(c) = m.value_of("profile") {
-                profile = c
+            if let Some(c) = m.get_one::<String>("profile") {
+                profile = c;
             }
         }
 
@@ -395,11 +395,11 @@ impl ContainerAspect for Profile {
     }
 
     fn config_args(&self) -> Vec<Arg> {
-        vec![Arg::with_name("profile")
-            .short("p")
+        vec![Arg::new("profile")
+            .short('p')
             .long("profile")
             .help("specify the profile to use")
-            .takes_value(true)
+            .action(ArgAction::Set)
             .default_value("default")]
     }
 }
@@ -425,9 +425,9 @@ impl ContainerAspect for Mount {
     }
 }
 
-impl TryFrom<&str> for Mount {
+impl TryFrom<&String> for Mount {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
+    fn try_from(value: &String) -> Result<Self> {
         let vs: Vec<&str> = value.split(':').collect();
         if vs.len() != 2 {
             return Err(Error::InvalidMount(value.to_string()));
@@ -446,11 +446,11 @@ impl ContainerAspect for Name {
         String::from("Name")
     }
     fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
-        let mut container_name: String = "default".to_string();
+        let mut container_name = String::from("default");
         if let Some(m) = matches {
-            if let Some(c) = m.value_of("container_name") {
+            if let Some(c) = m.get_one::<String>("container_name") {
                 container_name = c.to_string();
-            } else if let Some(c) = m.value_of("profile") {
+            } else if let Some(c) = m.get_one::<String>("profile") {
                 container_name = format!("{}-{}", self.0, c);
             }
         }
@@ -460,12 +460,12 @@ impl ContainerAspect for Name {
     }
 
     fn config_args(&self) -> Vec<Arg> {
-        vec![Arg::with_name("container_name")
-            .short("n")
+        vec![Arg::new("container_name")
+            .short('n')
             .long("name")
             .help("specify the name of the container to be run")
             .global(true)
-            .takes_value(true)]
+            .action(ArgAction::Set)]
         .into_iter()
         .collect()
     }
@@ -601,9 +601,9 @@ impl From<&Locale> for String {
     }
 }
 
-impl TryFrom<&str> for Locale {
+impl TryFrom<&String> for Locale {
     type Error = Error;
-    fn try_from(value: &str) -> Result<Self> {
+    fn try_from(value: &String) -> Result<Self> {
         let mut locale = Locale {
             language: String::new(),
             territory: String::new(),
@@ -672,7 +672,7 @@ RUN echo {tz} > /etc/timezone
     fn run_args(&self, matches: Option<&ArgMatches>) -> Result<Vec<String>> {
         let mut timezone = self.0.clone();
         if let Some(m) = matches {
-            if let Some(tz) = m.value_of("timezone") {
+            if let Some(tz) = m.get_one::<String>("timezone") {
                 timezone = tz.to_string()
             }
         }
@@ -699,9 +699,9 @@ echo {tz} > /etc/timezone
     }
 }
 
-impl TryFrom<&str> for Timezone {
+impl TryFrom<&String> for Timezone {
     type Error = Error;
-    fn try_from(input: &str) -> Result<Self> {
+    fn try_from(input: &String) -> Result<Self> {
         let tz = input.to_string();
         match tzdata::Timezone::new(input) {
             Ok(_) => Ok(Timezone(tz)),

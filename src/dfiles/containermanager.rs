@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write};
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{Arg, ArgAction, ArgMatches, Command};
 use dockworker::{ContainerBuildOptions, Docker};
 use dyn_clone;
 use serde::Deserialize;
@@ -114,10 +114,11 @@ impl ContainerManager {
             args.extend(aspect.run_args(Some(matches))?);
         }
 
-        let command: Vec<String> = match matches.values_of("command") {
-            None => vec!["/bin/bash".to_string()],
-            Some(s) => s.map(|s| s.to_string()).collect(),
-        };
+        let command: Vec<String> = matches
+            .try_get_many::<String>("command")?
+            .map_or(vec!["/bin/bash".to_string()], |values_ref| {
+                values_ref.map(String::from).collect()
+            });
 
         let ep_args = entrypoint::setup(self.tempdir.path(), &self.aspects)?;
         args.extend(ep_args);
@@ -201,19 +202,18 @@ impl ContainerManager {
     fn config(&self, matches: &ArgMatches) -> Result<()> {
         let cfg = config::Config::try_from(matches)?;
 
-        let mut profile: Option<&str> = None;
-        if matches.occurrences_of("profile") > 0 {
-            profile = matches.value_of("profile");
-        }
+        let profile: Option<&str> = matches
+            .try_get_one::<String>("profile")?
+            .map(|x| x.as_str());
 
         cfg.save(Some(&self.name), profile)
     }
 
     fn load_config(&mut self, matches: &ArgMatches) -> Result<()> {
-        let mut profile: Option<&str> = None;
-        if matches.occurrences_of("profile") > 0 {
-            profile = matches.value_of("profile");
-        }
+        let profile: Option<&str> = matches
+            .try_get_one::<String>("profile")?
+            .map(|x| x.as_str());
+
         let cfg = config::Config::load(&self.name, profile)?;
 
         let cli_cfg = config::Config::try_from(matches)?;
@@ -224,18 +224,19 @@ impl ContainerManager {
     }
 
     pub fn execute(&mut self) -> Result<()> {
-        let mut run = SubCommand::with_name("run").about("run app in container");
-        let mut cmd = SubCommand::with_name("cmd").about("run specified command in container");
-        let mut build = SubCommand::with_name("build").about("build app container");
-        let mut config = SubCommand::with_name("config").about("configure app container settings");
-        let generate_archive = SubCommand::with_name("generate-archive")
-            .about("generate archive used to build container");
+        let mut run = Command::new("run").about("run app in container");
+        let mut cmd = Command::new("cmd").about("run specified command in container");
+        let mut build = Command::new("build").about("build app container");
+        let mut config = Command::new("config").about("configure app container settings");
+        let generate_archive =
+            Command::new("generate-archive").about("generate archive used to build container");
 
-        let mut app = App::new(&self.name).version("0.0").arg(
-            Arg::with_name("verbose")
-                .short("v")
+        let mut app = Command::new(&self.name).version("0.0").arg(
+            Arg::new("verbose")
+                .short('v')
                 .long("verbose")
-                .multiple(true),
+                .value_parser(clap::value_parser!(u8))
+                .action(ArgAction::Count),
         );
 
         self.aspects.insert(
@@ -253,11 +254,10 @@ impl ContainerManager {
         }
 
         cmd = cmd.arg(
-            Arg::with_name("command")
-                .takes_value(true)
+            Arg::new("command")
+                .action(ArgAction::Set)
                 .last(true)
                 .required(true)
-                .multiple(true)
                 .help("command to run instead of default"),
         );
 
@@ -284,24 +284,24 @@ impl ContainerManager {
             .subcommand(config)
             .subcommand(generate_archive);
 
-        let matches = app.get_matches();
+        let matches = app.get_matches_mut();
 
-        let level = matches.occurrences_of("verbose");
-        logging::setup(level)?;
+        let level = matches.get_one("verbose").unwrap_or(&0u8);
+        logging::setup(*level)?;
 
-        let (subc, subm) = matches.subcommand();
-
-        if let Some(v) = subm {
-            self.load_config(v)?;
-        }
-
-        match (subc, subm) {
-            ("run", Some(subm)) => self.run(subm),
-            ("cmd", Some(subm)) => self.cmd(subm),
-            ("build", _) => self.build(),
-            ("config", Some(subm)) => self.config(subm),
-            ("generate-archive", _) => self.generate_archive(),
-            (_, _) => Ok(println!("{}", matches.usage())),
+        match matches.subcommand() {
+            Some((cmd, subm)) => {
+                self.load_config(subm)?;
+                match cmd {
+                    "run" => self.run(subm),
+                    "cmd" => self.cmd(subm),
+                    "build" => self.build(),
+                    "config" => self.config(subm),
+                    "generate-archive" => self.generate_archive(),
+                    &_ => Ok(println!("{}", app.render_usage())),
+                }
+            }
+            None => Ok(println!("{}", app.render_usage())),
         }
     }
 }
