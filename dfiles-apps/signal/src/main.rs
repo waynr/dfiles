@@ -49,7 +49,7 @@ impl Signal {
         let home = env::var("HOME").expect("HOME must be set");
         let container_path = format!("{}/.config/Signal/", home);
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "signal".to_string(),
             vec![String::from("waynr/signal:v0")],
             vec![container_path],
@@ -69,7 +69,7 @@ impl Signal {
                 .collect(),
             None,
         )
-        .context("initializing signal container manager")?)
+        .context("initializing signal container manager")
     }
 }
 

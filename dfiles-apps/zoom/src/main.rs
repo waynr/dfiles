@@ -34,7 +34,7 @@ impl Zoom {
 
         let version = env!("CARGO_PKG_VERSION");
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "zoom".to_string(),
             vec![format!("{}:{}", "waynr/zoom", version)],
             vec![
@@ -55,7 +55,7 @@ impl Zoom {
             vec!["zoom"].into_iter().map(String::from).collect(),
             None,
         )
-        .context("initializing zoom container manager")?)
+        .context("initializing zoom container manager")
     }
 }
 

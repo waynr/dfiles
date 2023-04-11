@@ -97,7 +97,7 @@ impl Chrome {
         let home_dir = format!("{}/.config", home);
         let version = env!("CARGO_PKG_VERSION");
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "chrome".to_string(),
             vec![format!("waynr/chrome:{}", version)],
             vec![home_dir, data_dir.clone()],
@@ -118,7 +118,7 @@ impl Chrome {
                 .collect(),
             Some(String::from("bullseye")),
         )
-        .context("initializing chrome container manager")?)
+        .context("initializing chrome container manager")
     }
 }
 

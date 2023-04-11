@@ -49,7 +49,7 @@ impl Discord {
 
         let version = env!("CARGO_PKG_VERSION");
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "discord".to_string(),
             vec![format!("{}:{}", "waynr/discord", version)],
             vec![container_path],
@@ -67,7 +67,7 @@ impl Discord {
             vec!["discord"].into_iter().map(String::from).collect(),
             None,
         )
-        .context("initializing discord container manager")?)
+        .context("initializing discord container manager")
     }
 }
 

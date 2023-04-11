@@ -49,7 +49,7 @@ impl Firefox {
         let home = env::var("HOME").expect("HOME must be set");
         let container_path = format!("{}/.mozilla/firefox/profile", home);
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "firefox".to_string(),
             vec![format!("{}:{}", "waynr/firefox", VERSION)],
             vec![container_path.clone()],
@@ -74,7 +74,7 @@ impl Firefox {
             .collect(),
             Some(String::from("bookworm")),
         )
-        .context("initializing firefox container manager")?)
+        .context("initializing firefox container manager")
     }
 }
 

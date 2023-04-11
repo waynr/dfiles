@@ -72,7 +72,7 @@ impl Thinkorswim {
         };
 
         let thinkorswim_install_dir = format!("{}/thinkorswim", home);
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "thinkorswim".to_string(),
             vec![format!("{}:{}", "waynr/thinkorswim", version)],
             vec![
@@ -98,7 +98,7 @@ impl Thinkorswim {
             vec![format!("{}/thinkorswim", thinkorswim_install_dir)],
             Some(String::from("bullseye")),
         )
-        .context("initializing thinkorswim container manager")?)
+        .context("initializing thinkorswim container manager")
     }
 }
 

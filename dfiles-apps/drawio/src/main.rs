@@ -47,7 +47,7 @@ impl Drawio {
 
         let version = env!("CARGO_PKG_VERSION");
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "drawio".to_string(),
             vec![format!("{}:{}", "waynr/drawio", version)],
             vec![container_path],
@@ -63,7 +63,7 @@ impl Drawio {
             vec!["drawio"].into_iter().map(String::from).collect(),
             None,
         )
-        .context("initializing drawio container manager")?)
+        .context("initializing drawio container manager")
     }
 }
 

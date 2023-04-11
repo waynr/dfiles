@@ -37,7 +37,7 @@ impl Steam {
 
         let version = env!("CARGO_PKG_VERSION");
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "steam".to_string(),
             vec![format!("{}:{}", "waynr/steam", version)],
             vec![container_path],
@@ -58,7 +58,7 @@ impl Steam {
                 .collect(),
             None,
         )
-        .context("initializing steam container manager")?)
+        .context("initializing steam container manager")
     }
 }
 

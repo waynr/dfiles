@@ -102,7 +102,7 @@ impl Skype {
 
         let version = env!("CARGO_PKG_VERSION");
 
-        Ok(ContainerManager::default_debian(
+        ContainerManager::default_debian(
             "skype".to_string(),
             vec![format!("{}:{}", "waynr/skype", version)],
             vec![container_path],
@@ -123,7 +123,7 @@ impl Skype {
                 .collect(),
             None,
         )
-        .context("initializing skype container manager")?)
+        .context("initializing skype container manager")
     }
 }
 
