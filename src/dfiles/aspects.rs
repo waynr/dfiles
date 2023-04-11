@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::str::FromStr;
 use std::fmt;
 use std::path::Path;
 use std::{env, fs};
@@ -703,7 +704,7 @@ impl TryFrom<&String> for Timezone {
     type Error = Error;
     fn try_from(input: &String) -> Result<Self> {
         let tz = input.to_string();
-        match tzdata::Timezone::new(input) {
+        match chrono_tz::Tz::from_str(input) {
             Ok(_) => Ok(Timezone(tz)),
             Err(_) => Err(Error::InvalidTimezone(tz)),
         }
