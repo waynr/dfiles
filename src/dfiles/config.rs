@@ -205,7 +205,7 @@ fn merge<T: Clone>(
     }
 }
 
-pub fn cli_args<'a, 'b>() -> Vec<Arg> {
+pub fn cli_args() -> Vec<Arg> {
     vec![
         Arg::new("mount")
             .short('m')
