@@ -39,7 +39,7 @@ fn write_script(tmpdir: &Path, mut scripts: Vec<ScriptSnippet>) -> Result<PathBu
 
     let mut buffer = String::new();
 
-    write!(
+    writeln!(
         buffer,
         r#"#!/usr/bin/env bash
 USER=root"#
