@@ -640,7 +640,7 @@ mod locale_should {
     #[test]
     fn convert_from_str() -> Result<()> {
         assert_eq!(
-            Locale::try_from("en_US.UTF-8")?,
+            Locale::try_from(&String::from("en_US.UTF-8"))?,
             Locale {
                 language: "en".to_string(),
                 territory: "US".to_string(),
