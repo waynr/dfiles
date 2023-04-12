@@ -21,15 +21,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ansi_term"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "anstream"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -145,8 +136,7 @@ name = "chrome"
 version = "2023.2.17"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -185,21 +175,6 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "2.34.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0610544180c38b88101fecf2dd634b174a62eef6946f84dfc6a7127512b381c"
-dependencies = [
- "ansi_term",
- "atty",
- "bitflags",
- "strsim 0.8.0",
- "textwrap",
- "unicode-width",
- "vec_map",
-]
-
-[[package]]
-name = "clap"
 version = "4.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "046ae530c528f252094e4a77886ee1374437744b2bff1497aa898bbddbbb29b3"
@@ -217,7 +192,7 @@ dependencies = [
  "anstyle",
  "bitflags",
  "clap_lex",
- "strsim 0.10.0",
+ "strsim",
 ]
 
 [[package]]
@@ -304,9 +279,13 @@ dependencies = [
 [[package]]
 name = "dfiles"
 version = "0.1.0"
+
+[[package]]
+name = "dfiles-core"
+version = "0.1.0"
 dependencies = [
  "chrono-tz",
- "clap 4.2.1",
+ "clap",
  "directories-next",
  "dockworker",
  "dyn-clone",
@@ -367,8 +346,7 @@ name = "discord"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -403,8 +381,7 @@ name = "drawio"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -473,8 +450,7 @@ name = "firefox"
 version = "107.0.1"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -1216,8 +1192,7 @@ name = "signal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -1240,8 +1215,7 @@ name = "skype"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -1274,15 +1248,8 @@ name = "steam"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
-
-[[package]]
-name = "strsim"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "strsim"
@@ -1346,21 +1313,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "textwrap"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
-dependencies = [
- "unicode-width",
-]
-
-[[package]]
 name = "thinkorswim"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
 
 [[package]]
@@ -1523,12 +1480,6 @@ name = "utf8parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
-
-[[package]]
-name = "vec_map"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "want"
@@ -1795,6 +1746,5 @@ name = "zoom"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "clap 2.34.0",
- "dfiles",
+ "dfiles-core",
 ]
