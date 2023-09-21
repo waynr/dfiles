@@ -18,7 +18,7 @@ impl aspects::ContainerAspect for Discord {
             aspects::DockerfileSnippet {
                 order: 91,
                 content: r#"WORKDIR /opt/
-RUN curl https://dl.discordapp.net/apps/linux/0.0.25/discord-0.0.25.deb > /opt/discord.deb && \
+RUN curl https://dl.discordapp.net/apps/linux/0.0.30/discord-0.0.30.deb > /opt/discord.deb && \
     dpkg --force-depends -i /opt/discord.deb  ; rm /opt/discord.deb
 RUN apt-get update && apt-get --fix-broken install -y \
   && apt-get purge --autoremove \
