@@ -66,7 +66,7 @@ impl ContainerAspect for PulseAudio {
     }
     fn run_args(&self, _: Option<&ArgMatches>) -> Result<Vec<String>> {
         let home = env::var("HOME").expect("HOME must be set");
-        let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("HOME must be set");
+        let xdg_runtime_dir = env::var("XDG_RUNTIME_DIR").expect("XDG_RUNTIME_DIR must be set");
         let pulsedir = format!("{}/{}", xdg_runtime_dir, "pulse");
 
         Ok(vec![
