@@ -142,7 +142,7 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrome"
-version = "2023.2.17"
+version = "2023.10.4"
 dependencies = [
  "anyhow",
  "clap 2.34.0",
@@ -364,7 +364,7 @@ dependencies = [
 
 [[package]]
 name = "discord"
-version = "0.0.30"
+version = "0.0.34"
 dependencies = [
  "anyhow",
  "clap 2.34.0",
@@ -470,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "firefox"
-version = "107.0.1"
+version = "119.0.1"
 dependencies = [
  "anyhow",
  "clap 2.34.0",
