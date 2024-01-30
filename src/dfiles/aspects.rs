@@ -523,7 +523,10 @@ useradd --home-dir /home/{user} \
 adduser {user} tty
 
 mkdir -p /data /home/{user}
-chown {user}:{group} /data /home/{user}
+# NOTE: we need to recursively chown all files in the /home/{user} directory
+#       because this script runs after volume mounting happens and applications
+#       can very subtly break if there are any directories owned by root
+chown -R {user}:{group} /data /home/{user}
 
 cd /home/{user}
 USER={user}"#,
