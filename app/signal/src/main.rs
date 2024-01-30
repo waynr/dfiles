@@ -28,6 +28,7 @@ impl aspects::ContainerAspect for Signal {
         libv4l-0 \
         openjdk-11-jre \
         fonts-symbola \
+        xdg-utils \
     && curl -sSL https://updates.signal.org/desktop/apt/keys.asc | apt-key add - \
     && echo "deb [arch=amd64] https://updates.signal.org/desktop/apt xenial main" | tee -a /etc/apt/sources.list.d/signal-xenial.list \
     && apt-get update && apt-get install -y --no-install-recommends \
@@ -66,7 +67,7 @@ fn main() -> Result<()> {
             .into_iter()
             .map(String::from)
             .collect(),
-        None,
+        Some("bullseye".to_string()),
     )?;
 
     mgr.execute().context("executing signal in container")
