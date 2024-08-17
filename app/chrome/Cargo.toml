@@ -3,7 +3,7 @@ name = "chrome"
 # because google chrome doesn't allow us to install a specific actual version of chrome, we have to
 # go with a date-based version string here since the best we can do at image build time is know the
 # current datetime
-version = "2024.1.12"
+version = "2024.5.4"
 authors = ["Wayne Warren <wayne.warren.s@gmail.com>"]
 edition = "2018"
 
